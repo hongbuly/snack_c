@@ -6,6 +6,7 @@
 #include <ncurses.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <string>
 using namespace std;
 
 int map[21][21];
@@ -16,6 +17,7 @@ int head_x = 9;
 int tail_x[400];
 int tail_y[400];
 int tail_length = 2;
+bool gameOver = false;
 
 void setMap() {
 	for (int i = 0; i < 21; i++) {
@@ -68,10 +70,15 @@ void drawMap() {
 			}
 		}
 	}
+
+	mvprintw(24, 5, to_string(tail_x[1]).c_str());
+	mvprintw(25, 5, to_string(tail_y[1]).c_str());
 	refresh();
 }
 
 bool isGameOver() {
+	if (gameOver)
+		return true;
 	if (head_x == 0 || head_x == 20 || head_y == 0 || head_y == 20) {
 		return true;
 	}
@@ -102,18 +109,26 @@ void* getInput(void *arg) {
 		int input = getch();
 		//72 up, 80 down, 77 right, 75 left
 		if (input == KEY_UP) {
+			if (direction_y == 1)
+				gameOver = true;
 			direction_y = -1;
 			direction_x = 0;
 		}
 		else if (input == KEY_DOWN) {
+			if (direction_y == -1)
+				gameOver = true;
 			direction_y = 1;
 			direction_x = 0;
 		}
 		else if (input == KEY_RIGHT) {
+			if (direction_x == -1)
+				gameOver = true;
 			direction_x = 1;
 			direction_y = 0;
 		}
 		else if (input == KEY_LEFT) {
+			if (direction_x == 1)
+				gameOver = true;
 			direction_x = -1;
 			direction_y = 0;
 		}
@@ -135,8 +150,8 @@ int main() {
 
 	while (!isGameOver()) {
 		drawMap();
-		sleep(1);
 		moveSnake();
+		usleep(500000);
 	}
 
 	mvprintw(22, 5, "GameOver");
