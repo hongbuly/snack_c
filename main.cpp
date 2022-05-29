@@ -41,6 +41,15 @@ void setMap() {
 	tail_x[1] = 11;
 }
 
+bool isTailPosition(int tail_position, int i, int j) {
+	for (int k = tail_position; k < tail_length; k++) {
+		if (tail_y[k] == i && tail_x[k] == j) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void drawMap() {
 	clear();
 	int tail_position = 0;
@@ -56,7 +65,8 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(1));
 			}
-			else if (tail_position < tail_length && tail_y[tail_position] == i && tail_x[tail_position] == j) {
+			else if (map[i][j] == 3)
+			{
 				tail_position++;
 				start_color();
 				init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
@@ -70,9 +80,6 @@ void drawMap() {
 			}
 		}
 	}
-
-	mvprintw(24, 5, to_string(tail_x[1]).c_str());
-	mvprintw(25, 5, to_string(tail_y[1]).c_str());
 	refresh();
 }
 
@@ -88,6 +95,8 @@ bool isGameOver() {
 void moveSnake() {
 	int prevX = head_x;
 	int prevY = head_y;
+	int removeX = tail_x[tail_length - 1];
+	int removeY = tail_y[tail_length - 1];
 
 	head_x += direction_x;
 	head_y += direction_y;
@@ -98,6 +107,11 @@ void moveSnake() {
 	}
 	tail_x[0] = prevX;
 	tail_y[0] = prevY;
+
+	for (int i = 0; i < tail_length; i++) {
+		map[tail_y[i]][tail_x[i]] = 3;
+	}
+	map[removeY][removeX] = 0;
 }
 
 void* getInput(void *arg) {
