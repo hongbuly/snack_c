@@ -52,6 +52,15 @@ void setMap() {
 	tail_x[1] = 11;
 }
 
+bool isTailPosition(int tail_position, int i, int j) {
+	for (int k = tail_position; k < tail_length; k++) {
+		if (tail_y[k] == i && tail_x[k] == j) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void drawMap() {
 	clear();
 	int tail_position = 0;
@@ -73,9 +82,10 @@ void drawMap() {
 				mvprintw(i, j, "\U0001F7E5");
 				attroff(COLOR_PAIR(6));
 			}
+			// 외곽선
 			if (map[i][j] == 1 || map[i][j] == 2)
 				mvprintw(i, j, "\u2B1B");
-			// 머리 그리기
+			// 머리
 			else if (head_y == i && head_x == j) {
 				start_color();
 				init_pair(1, COLOR_YELLOW, COLOR_BLACK);
@@ -84,8 +94,9 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(1));
 			}
-			// 몸통 그리기
-			else if (tail_position < tail_length && tail_y[tail_position] == i && tail_x[tail_position] == j) {
+			// 몸통
+			else if (map[i][j] == 3)
+			{
 				tail_position++;
 				start_color();
 				init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
@@ -94,15 +105,12 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(2));
 			}
-			
+			// 빈공간
 			else if (map[i][j] == 0) {
 				mvprintw(i, j, "\u2B1C");
 			}
 		}
 	}
-
-	mvprintw(24, 5, to_string(tail_x[1]).c_str());
-	mvprintw(25, 5, to_string(tail_y[1]).c_str());
 	refresh();
 }
 
@@ -119,12 +127,14 @@ bool isGameOver() {
 void moveSnake() {
 	int prevX = head_x;
 	int prevY = head_y;
+	int removeX = tail_x[tail_length - 1];
+	int removeY = tail_y[tail_length - 1];
 
 	head_x += direction_x;
 	head_y += direction_y;
 	
-	// Head가 아이템G에 닿았을 때
-	if(map[head_y][head_x] == 5) {
+	// Head가 아이템G에 닿았을 때   0 H 0 1 2   H 0 1 2 3
+	if(map[head_y][head_x] == 5) { // G H 0 1   H 0 1 2
 	    tail_length++;
 	    for (int i = tail_length - 1; i > 0; i--) {
 		    tail_x[i] = tail_x[i - 1];
@@ -132,26 +142,49 @@ void moveSnake() {
 	    }
 	    tail_x[0] = prevX;
 	    tail_y[0] = prevY;
+	    
+	    for (int i = 0; i < tail_length; i++) {
+		    map[tail_y[i]][tail_x[i]] = 3;
+	    }
+	    
+	    // map[removeY][removeX] = 0;
 	    map[head_y][head_x] = 0;
 	}
 	// Head가 아이템P에 닿았을 때
 	else if(map[head_y][head_x] == 6) {
+	    map[removeY][removeX] = 0;
 	    tail_length--;
+	    
+	    removeX = tail_x[tail_length - 1];
+	    removeY = tail_y[tail_length - 1];
 	    for (int i = tail_length - 1; i > 0; i--) {
 		    tail_x[i] = tail_x[i - 1];
 		    tail_y[i] = tail_y[i - 1];
 	    }
 	    tail_x[0] = prevX;
 	    tail_y[0] = prevY;
+	    
+	    for (int i = 0; i < tail_length; i++) {
+		    map[tail_y[i]][tail_x[i]] = 3;
+	    }
+    	map[removeY][removeX] = 0;
+	    
 	    map[head_y][head_x] = 0;
 	}
-
-	for (int i = tail_length - 1; i > 0; i--) {
-		tail_x[i] = tail_x[i - 1];
-		tail_y[i] = tail_y[i - 1];
-	}
-	tail_x[0] = prevX;
-	tail_y[0] = prevY;
+	else {
+	    for (int i = tail_length - 1; i > 0; i--) {
+    		tail_x[i] = tail_x[i - 1];
+	    	tail_y[i] = tail_y[i - 1];
+    	}
+    	tail_x[0] = prevX;
+    	tail_y[0] = prevY;
+    	
+    	for (int i = 0; i < tail_length; i++) {
+    		map[tail_y[i]][tail_x[i]] = 3;
+    	}
+	    map[removeY][removeX] = 0;
+    }
+	
 }
 
 void* getInput(void *arg) {
@@ -240,7 +273,7 @@ int main() {
     int t = 0;
     
 	while (!isGameOver()) {
-	    if (t >= 20) { getItemG(); getItemP(); t = 0; }
+	    if (t >= 20 && t % 20 == 0) { getItemG(); getItemP(); }
 	    moveSnake();
 		drawMap();
 		usleep(500000);
