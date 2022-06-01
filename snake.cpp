@@ -75,7 +75,7 @@ void drawMap() {
 				start_color();
 				init_pair(5, COLOR_GREEN, COLOR_BLACK);
 
-				attron(COLOR_PAIR(1));
+				attron(COLOR_PAIR(5));
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(5));
 			}
@@ -84,7 +84,7 @@ void drawMap() {
 				start_color();
 				init_pair(4, COLOR_RED, COLOR_BLACK);
 
-				attron(COLOR_PAIR(1));
+				attron(COLOR_PAIR(4));
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(4));
 			}
@@ -93,7 +93,7 @@ void drawMap() {
 				start_color();
 				init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
 
-				attron(COLOR_PAIR(1));
+				attron(COLOR_PAIR(3));
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(3));
 			}
