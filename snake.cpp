@@ -49,6 +49,15 @@ void setMap() {
 	map[20][20] = 2;
 	map[20][0] = 2;
 	map[0][20] = 2;
+	
+	// 임시벽
+	map[4][4] = 1;
+	map[4][5] = 1;
+	map[4][6] = 1;
+	map[5][6] = 1;
+	map[6][6] = 1;
+	map[7][6] = 1;
+	
     // 초기 몸통 위치 0[10, 10], 1[10, 11]
 	tail_y[0] = 10;
 	tail_x[0] = 10;
@@ -72,7 +81,7 @@ void drawMap() {
 		for (int j = 0; j < 21; j++) {
 		    // 아이템G
 		    if (map[i][j] == 5) {
-				mvprintw(i, j, "\U0001F7E9");
+				mvprintw(i, j, "\U0001F7E8");
 			}
 			// 아이템P
 			else if (map[i][j] == 6) {
@@ -81,28 +90,18 @@ void drawMap() {
 			// 게이트
 			else if (map[i][j] == 7 || map[i][j] == 8)
 				mvprintw(i, j, "\U0001F7EA");
-			// 외곽선
+			// 벽
 			if (map[i][j] == 1 || map[i][j] == 2)
 				mvprintw(i, j, "\u2B1B");
 			// 머리
 			else if (head_y == i && head_x == j) {
-				start_color();
-				init_pair(1, COLOR_YELLOW, COLOR_BLACK);
-
-				attron(COLOR_PAIR(1));
 				mvprintw(i, j, "\U0001F7E8");
-				attroff(COLOR_PAIR(1));
 			}
 			// 몸통
 			else if (map[i][j] == 3)
 			{
 				tail_position++;
-				start_color();
-				init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
-
-				attron(COLOR_PAIR(2));
 				mvprintw(i, j, "\u2B1B");
-				attroff(COLOR_PAIR(2));
 			}
 			// 빈공간
 			else if (map[i][j] == 0) {
@@ -202,9 +201,40 @@ void moveSnake() {
             direction_x = 0;
             direction_y = -1;
         }
-        else { // 벽이 아닌 곳에 게이트가 있을 경우 진행 방향 그대로
-            head_x = gateA_x + direction_x;
-            head_y = gateA_y + direction_y;
+        else { // 벽이 아닌 곳에 게이트가 있을 경우
+            int tmp_x = gateB_x + direction_x;
+            int tmp_y = gateB_y + direction_y;
+            
+            if(map[tmp_y][tmp_x] == 1) {
+                if(direction_x == 1 && direction_y == 0) { // 우 -> 하
+                    head_x = gateB_x;
+                    head_y = gateB_y + 1;
+                    direction_x = 0;
+                    direction_y = 1;
+                }
+                else if(direction_x == -1 && direction_y == 0) { // 좌 -> 상
+                    head_x = gateB_x;
+                    head_y = gateB_y - 1;
+                    direction_x = 0;
+                    direction_y = -1;
+                }
+                else if(direction_x == 0 && direction_y == 1) { // 하 -> 좌
+                    head_x = gateB_x - 1;
+                    head_y = gateB_y;
+                    direction_x = -1;
+                    direction_y = 0;
+                }
+                else if(direction_x == 0 && direction_y == -1) { // 상 -> 우
+                    head_x = gateB_x + 1;
+                    head_y = gateB_y;
+                    direction_x = 1;
+                    direction_y = 0;
+                }
+            }
+            else { // 진출방향에 벽이 없을경우
+                head_x = tmp_x;
+                head_y = tmp_y;
+            }
         }
         moveTails(prevX, prevY, removeX, removeY);
 	}
@@ -234,13 +264,44 @@ void moveSnake() {
             direction_x = 0;
             direction_y = -1;
         }
-        else { // 벽이 아닌 곳에 게이트가 있을 경우 진행 방향 그대로
-            head_x = gateA_x + direction_x;
-            head_y = gateA_y + direction_y;
+        else { // 벽이 아닌 곳에 게이트가 있을 경우
+            int tmp_x = gateA_x + direction_x;
+            int tmp_y = gateA_y + direction_y;
+            
+            if(map[tmp_y][tmp_x] == 1) {
+                if(direction_x == 1 && direction_y == 0) { // 우 -> 하
+                    head_x = gateA_x;
+                    head_y = gateA_y + 1;
+                    direction_x = 0;
+                    direction_y = 1;
+                }
+                else if(direction_x == -1 && direction_y == 0) { // 좌 -> 상
+                    head_x = gateA_x;
+                    head_y = gateA_y - 1;
+                    direction_x = 0;
+                    direction_y = -1;
+                }
+                else if(direction_x == 0 && direction_y == 1) { // 하 -> 좌
+                    head_x = gateA_x - 1;
+                    head_y = gateA_y;
+                    direction_x = -1;
+                    direction_y = 0;
+                }
+                else if(direction_x == 0 && direction_y == -1) { // 상 -> 우
+                    head_x = gateA_x + 1;
+                    head_y = gateA_y;
+                    direction_x = 1;
+                    direction_y = 0;
+                }
+            }
+            else { // 진출방향에 벽이 없을경우
+                head_x = tmp_x;
+                head_y = tmp_y;
+            }
         }
         moveTails(prevX, prevY, removeX, removeY);
 	}
-	else {
+	else { // 진출방향에 아무 것도 없을 시
 	    moveTails(prevX, prevY, removeX, removeY);
     }
 }
