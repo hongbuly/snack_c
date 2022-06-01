@@ -8,29 +8,29 @@
 #include <algorithm>
 using namespace std;
 
-int map[21][21]; // º¸µå Å©±â
+int map[21][21]; // ë³´ë“œ í¬ê¸°
 int direction_x = -1; //left:-1, right:1
 int direction_y; //up:-1, down:1
 
-// ¸Ó¸® À§Ä¡
-int head_y = 10; int head_x = 9;
+// ë¨¸ë¦¬ ìœ„ì¹˜
+int head_y = 10; int head_x = 9; 
 
-// ¸öÅë Å©±â
+// ëª¸í†µ í¬ê¸°
 int tail_x[400];
 int tail_y[400];
 int tail_length = 2;
 
 bool gameOver = false;
 
-// Item À§Ä¡
+// Item ìœ„ì¹˜
 int itemG_x; int itemG_y;
 int itemP_x; int itemP_y;
 
-// Gate À§Ä¡
+// Gate ìœ„ì¹˜
 int gateA_x; int gateA_y;
 int gateB_x; int gateB_y;
 
-// Gate Åë°úÁßÀÎÁö ¿©ºÎ
+// Gate í†µê³¼ì¤‘ì¸ì§€ ì—¬ë¶€
 int passGate = 0;
 
 void setMap() {
@@ -44,12 +44,21 @@ void setMap() {
 			}
 		}
 	}
-	// ²ÀÁöÁ¡
+	// ê¼­ì§€ì 
 	map[0][0] = 2;
 	map[20][20] = 2;
 	map[20][0] = 2;
 	map[0][20] = 2;
-	// ÃÊ±â ¸öÅë À§Ä¡ 0[10, 10], 1[10, 11]
+	
+	// ì„ì‹œë²½ ì¶”í›„ ì‚­ì œ
+	map[4][4] = 1;
+	map[4][5] = 1;
+	map[4][6] = 1;
+	map[5][6] = 1;
+	map[6][6] = 1;
+	map[7][6] = 1;
+	
+    // ì´ˆê¸° ëª¸í†µ ìœ„ì¹˜ 0[10, 10], 1[10, 11]
 	tail_y[0] = 10;
 	tail_x[0] = 10;
 	tail_y[1] = 10;
@@ -70,57 +79,31 @@ void drawMap() {
 	int tail_position = 0;
 	for (int i = 0; i < 21; i++) {
 		for (int j = 0; j < 21; j++) {
-			// ¾ÆÀÌÅÛG
-			if (map[i][j] == 5) {
-				start_color();
-				init_pair(5, COLOR_GREEN, COLOR_BLACK);
-
-				attron(COLOR_PAIR(5));
-				mvprintw(i, j, "\u2B1B");
-				attroff(COLOR_PAIR(5));
+		    // ì•„ì´í…œG
+		    if (map[i][j] == 5) {
+				mvprintw(i, j, "U0001F7E9");
 			}
-			// ¾ÆÀÌÅÛP
+			// ì•„ì´í…œP
 			else if (map[i][j] == 6) {
-				start_color();
-				init_pair(4, COLOR_RED, COLOR_BLACK);
-
-				attron(COLOR_PAIR(4));
-				mvprintw(i, j, "\u2B1B");
-				attroff(COLOR_PAIR(4));
+				mvprintw(i, j, "\U0001F7E5");
 			}
-			// °ÔÀÌÆ®
-			else if (map[i][j] == 7 || map[i][j] == 8) {
-				start_color();
-				init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
-
-				attron(COLOR_PAIR(3));
-				mvprintw(i, j, "\u2B1B");
-				attroff(COLOR_PAIR(3));
-			}
-			// ¿Ü°û¼±
+			// ê²Œì´íŠ¸
+			else if (map[i][j] == 7 || map[i][j] == 8)
+				mvprintw(i, j, "\U0001F7EA");
+			// ë²½
 			if (map[i][j] == 1 || map[i][j] == 2)
 				mvprintw(i, j, "\u2B1B");
-			// ¸Ó¸®
+			// ë¨¸ë¦¬
 			else if (head_y == i && head_x == j) {
-				start_color();
-				init_pair(1, COLOR_YELLOW, COLOR_BLACK);
-
-				attron(COLOR_PAIR(1));
-				mvprintw(i, j, "\u2B1B");
-				attroff(COLOR_PAIR(1));
+				mvprintw(i, j, "\U0001F7E8");
 			}
-			// ¸öÅë
+			// ëª¸í†µ
 			else if (map[i][j] == 3)
 			{
 				tail_position++;
-				start_color();
-				init_pair(2, COLOR_BLUE, COLOR_BLACK);
-
-				attron(COLOR_PAIR(2));
 				mvprintw(i, j, "\u2B1B");
-				attroff(COLOR_PAIR(2));
 			}
-			// ºó°ø°£
+			// ë¹ˆê³µê°„
 			else if (map[i][j] == 0) {
 				mvprintw(i, j, "\u2B1C");
 			}
@@ -132,25 +115,33 @@ void drawMap() {
 bool isGameOver() {
 	if (gameOver)
 		return true;
-	if (head_x == 0 || head_x == 20 || head_y == 0 || head_y == 20) { // snake°¡ ¿Üº®¿¡ ´êÀ» ½Ã
+	if (map[head_y][head_x] == 1 || map[head_y][head_x] == 2) { // snakeê°€ ë²½ì— ë‹¿ì„ ì‹œ
 		return true;
 	}
-	if (tail_length < 2) return true; // ¸öÅëÀÇ ±æÀÌ°¡ 2º¸´Ù ÀÛ¾ÆÁú °æ¿ì
+	if (tail_length < 2) return true; // ëª¸í†µì˜ ê¸¸ì´ê°€ 2ë³´ë‹¤ ì‘ì•„ì§ˆ ê²½ìš°
 	return false;
 }
 
-// moveSnakeÇÔ¼ö¿¡ »ç¿ëµÇ´Â ÇÔ¼ö
+// ë±€ì˜ ëª¸í†µì´ ì• ëª¸í†µì„ ë”°ë¼ ì´ë™í•˜ëŠ” í•¨ìˆ˜
 void moveTails(int prevX, int prevY, int removeX, int removeY) {
-	for (int i = tail_length - 1; i > 0; i--) {
-		tail_x[i] = tail_x[i - 1];
-		tail_y[i] = tail_y[i - 1];
-	}
-	tail_x[0] = prevX;
-	tail_y[0] = prevY;
+    for (int i = tail_length - 1; i > 0; i--) {
+    	tail_x[i] = tail_x[i - 1];
+	   	tail_y[i] = tail_y[i - 1];
+    }
+    tail_x[0] = prevX;
+    tail_y[0] = prevY;
+    
+    for (int i = 0; i < tail_length; i++)
+        map[tail_y[i]][tail_x[i]] = 3;
+    map[removeY][removeX] = 0;
+}
 
-	for (int i = 0; i < tail_length; i++)
-		map[tail_y[i]][tail_x[i]] = 3;
-	map[removeY][removeX] = 0;
+// ë±€ì˜ ì´ë™ê²½ë¡œ ê²°ì • ë° ë¨¸ë¦¬ ìœ„ì¹˜ ì´ë™
+void setSnake(int gate_x, int gate_y, int x, int y) {
+    direction_x = x;
+    direction_y = y;
+    head_x = gate_x + x;
+    head_y = gate_y + y;
 }
 
 void moveSnake() {
@@ -161,107 +152,106 @@ void moveSnake() {
 
 	head_x += direction_x;
 	head_y += direction_y;
-
-	passGate--; if (passGate <= 0) passGate = 0;
-
-	// Head°¡ ¾ÆÀÌÅÛG¿¡ ´ê¾ÒÀ» ¶§
-	if (map[head_y][head_x] == 5) {
-		tail_length++;
-		for (int i = tail_length - 1; i > 0; i--) {
-			tail_x[i] = tail_x[i - 1];
-			tail_y[i] = tail_y[i - 1];
-		}
-		tail_x[0] = prevX;
-		tail_y[0] = prevY;
-
-		for (int i = 0; i < tail_length; i++)
-			map[tail_y[i]][tail_x[i]] = 3;
-		// ¾ÆÀÌÅÛG È¹µæ ½Ã ¸öÀÇ ±æÀÌ°¡ ÁøÇà¹æÇâÀ¸·Î Áõ°¡ÇÏ¹Ç·Î ¸¶Áö¸· ²¿¸®¸¦ »èÁ¦ X
-		// map[removeY][removeX] = 0;
-		map[head_y][head_x] = 0;
+	
+	passGate--; if(passGate<=0) passGate = 0;
+	
+	// Headê°€ ì•„ì´í…œGì— ë‹¿ì•˜ì„ ë•Œ
+	if(map[head_y][head_x] == 5) {
+	    tail_length++;
+	    for (int i = tail_length - 1; i > 0; i--) {
+		    tail_x[i] = tail_x[i - 1];
+		    tail_y[i] = tail_y[i - 1];
+	    }
+	    tail_x[0] = prevX;
+	    tail_y[0] = prevY;
+	    
+	    for (int i = 0; i < tail_length; i++)
+            map[tail_y[i]][tail_x[i]] = 3;
+        // ì•„ì´í…œG íšë“ ì‹œ ëª¸ì˜ ê¸¸ì´ê°€ ì§„í–‰ë°©í–¥ìœ¼ë¡œ ì¦ê°€í•˜ë¯€ë¡œ ë§ˆì§€ë§‰ ê¼¬ë¦¬ë¥¼ ì‚­ì œ X
+	    // map[removeY][removeX] = 0;
+	    map[head_y][head_x] = 0;
 	}
-	// Head°¡ ¾ÆÀÌÅÛP¿¡ ´ê¾ÒÀ» ¶§
-	else if (map[head_y][head_x] == 6) {
-		map[removeY][removeX] = 0;
-		tail_length--;
+	// Headê°€ ì•„ì´í…œPì— ë‹¿ì•˜ì„ ë•Œ
+	else if(map[head_y][head_x] == 6) {
+	    map[removeY][removeX] = 0;
+	    tail_length--;
+	    
+	    removeX = tail_x[tail_length - 1];
+	    removeY = tail_y[tail_length - 1];
+	    
+	    moveTails(prevX, prevY, removeX, removeY);
+        map[head_y][head_x] = 0;
+	}
 
-		removeX = tail_x[tail_length - 1];
-		removeY = tail_y[tail_length - 1];
-
-		moveTails(prevX, prevY, removeX, removeY);
-		map[head_y][head_x] = 0;
+	// Headê°€ ê²Œì´íŠ¸ê°€ ë‹¿ì•˜ì„ ë•Œ
+	else if(map[head_y][head_x] == 7) {
+	    passGate += tail_length;
+        if(gateB_x == 0) // (ì¢Œì—ì„œ ìš°)
+            setSnake(gateB_x, gateB_y, 1, 0);
+        else if(gateB_x == 20) // (ìš°ì—ì„œ ì¢Œ)
+            setSnake(gateB_x, gateB_y, -1, 0);
+        else if(gateB_y == 0) // (ìƒì—ì„œ í•˜)
+            setSnake(gateB_x, gateB_y, 0, 1);
+        else if(gateB_y == 20) // (í•˜ì—ì„œ ìƒ)
+            setSnake(gateB_x, gateB_y, 0, -1);
+        else { // ë²½ì´ ì•„ë‹Œ ê³³ì— ê²Œì´íŠ¸ê°€ ìˆì„ ê²½ìš°
+            int tmp_x = gateB_x + direction_x;
+            int tmp_y = gateB_y + direction_y;
+            
+            if(map[tmp_y][tmp_x] == 1) {
+                if(direction_x == 1 && direction_y == 0) // ìš° -> í•˜
+                    setSnake(gateB_x, gateB_y, 0, 1);
+                else if(direction_x == -1 && direction_y == 0) // ì¢Œ -> ìƒ
+                    setSnake(gateB_x, gateB_y, 0, -1);
+                else if(direction_x == 0 && direction_y == 1) // í•˜ -> ì¢Œ
+                    setSnake(gateB_x, gateB_y, -1, 0);
+                else if(direction_x == 0 && direction_y == -1) // ìƒ -> ìš°
+                    setSnake(gateB_x, gateB_y, 1, 0);
+            }
+            else { // ì§„ì¶œë°©í–¥ì— ë²½ì´ ì—†ì„ê²½ìš°
+                head_x = tmp_x;
+                head_y = tmp_y;
+            }
+        }
+        moveTails(prevX, prevY, removeX, removeY);
 	}
-	// Head°¡ °ÔÀÌÆ®°¡ ´ê¾ÒÀ» ¶§
-	else if (map[head_y][head_x] == 7) {
-		passGate += tail_length;
-		if (gateB_x == 0) { // (ÁÂ¿¡¼­ ¿ì)
-			head_x = gateB_x + 1;
-			head_y = gateB_y;
-			direction_x = 1;
-			direction_y = 0;
-		}
-		else if (gateB_x == 20) { // (¿ì¿¡¼­ ÁÂ)
-			head_x = gateB_x - 1;
-			head_y = gateB_y;
-			direction_x = -1;
-			direction_y = 0;
-		}
-		else if (gateB_y == 0) { // (»ó¿¡¼­ ÇÏ)
-			head_x = gateB_x;
-			head_y = gateB_y + 1;
-			direction_x = 0;
-			direction_y = 1;
-		}
-		else if (gateB_y == 20) { // (ÇÏ¿¡¼­ »ó)
-			head_x = gateB_x;
-			head_y = gateB_y - 1;
-			direction_x = 0;
-			direction_y = -1;
-		}
-		else { // º®ÀÌ ¾Æ´Ñ °÷¿¡ °ÔÀÌÆ®°¡ ÀÖÀ» °æ¿ì ÁøÇà ¹æÇâ ±×´ë·Î
-			head_x = gateA_x + direction_x;
-			head_y = gateA_y + direction_y;
-		}
-		moveTails(prevX, prevY, removeX, removeY);
+	else if(map[head_y][head_x] == 8) {
+	    passGate += tail_length;
+        if(gateA_x == 0) // (ì¢Œì—ì„œ ìš°)
+            setSnake(gateA_x, gateA_y, 1, 0);
+        else if(gateA_x == 20) // (ìš°ì—ì„œ ì¢Œ)
+            setSnake(gateA_x, gateA_y, -1, 0);
+        else if(gateA_y == 0) // (ìƒì—ì„œ í•˜)
+            setSnake(gateA_x, gateA_y, 0, 1);
+        else if(gateA_y == 20) // (í•˜ì—ì„œ ìƒ)
+            setSnake(gateA_x, gateA_y, 0, -1);
+        else { // ë²½ì´ ì•„ë‹Œ ê³³ì— ê²Œì´íŠ¸ê°€ ìˆì„ ê²½ìš°
+            int tmp_x = gateA_x + direction_x;
+            int tmp_y = gateA_y + direction_y;
+            
+            if(map[tmp_y][tmp_x] == 1) {
+                if(direction_x == 1 && direction_y == 0) // ìš° -> í•˜
+                    setSnake(gateA_x, gateA_y, 0, 1);
+                else if(direction_x == -1 && direction_y == 0) // ì¢Œ -> ìƒ
+                    setSnake(gateA_x, gateA_y, 0, -1);
+                else if(direction_x == 0 && direction_y == 1) // í•˜ -> ì¢Œ
+                    setSnake(gateA_x, gateA_y, -1, 0);
+                else if(direction_x == 0 && direction_y == -1) // ìƒ -> ìš°
+                    setSnake(gateA_x, gateA_y, 1, 0);
+            }
+            else { // ì§„ì¶œë°©í–¥ì— ë²½ì´ ì—†ì„ê²½ìš°
+                head_x = tmp_x;
+                head_y = tmp_y;
+            }
+        }
+        moveTails(prevX, prevY, removeX, removeY);
 	}
-	else if (map[head_y][head_x] == 8) {
-		passGate += tail_length;
-		if (gateA_x == 0) { // (ÁÂ¿¡¼­ ¿ì)
-			head_x = gateA_x + 1;
-			head_y = gateA_y;
-			direction_x = 1;
-			direction_y = 0;
-		}
-		else if (gateA_x == 20) { // (¿ì¿¡¼­ ÁÂ)
-			head_x = gateA_x - 1;
-			head_y = gateA_y;
-			direction_x = -1;
-			direction_y = 0;
-		}
-		else if (gateA_y == 0) { // (»ó¿¡¼­ ÇÏ)
-			head_x = gateA_x;
-			head_y = gateA_y + 1;
-			direction_x = 0;
-			direction_y = 1;
-		}
-		else if (gateA_y == 20) { // (ÇÏ¿¡¼­ »ó)
-			head_x = gateA_x;
-			head_y = gateA_y - 1;
-			direction_x = 0;
-			direction_y = -1;
-		}
-		else { // º®ÀÌ ¾Æ´Ñ °÷¿¡ °ÔÀÌÆ®°¡ ÀÖÀ» °æ¿ì ÁøÇà ¹æÇâ ±×´ë·Î
-			head_x = gateA_x + direction_x;
-			head_y = gateA_y + direction_y;
-		}
-		moveTails(prevX, prevY, removeX, removeY);
-	}
-	else {
-		moveTails(prevX, prevY, removeX, removeY);
-	}
+	else { // ì§„ì¶œë°©í–¥ì— ì•„ë¬´ ê²ƒë„ ì—†ì„ ì‹œ
+	    moveTails(prevX, prevY, removeX, removeY);
+    }
 }
 
-void* getInput(void* arg) {
+void* getInput(void *arg) {
 	pthread_t tid;
 	tid = pthread_self();
 	keypad(stdscr, TRUE);
@@ -292,69 +282,69 @@ void* getInput(void* arg) {
 				gameOver = true;
 			direction_x = -1;
 			direction_y = 0;
-		}
+	    }
 	}
 	return arg;
 }
 
 void getItemG() {
-	if (itemG_y != 0) map[itemG_y][itemG_x] = 0; // º¸µå¿¡ ÀÌ¹Ì ¾ÆÀÌÅÛG°¡ ÀÖÀ¸¸é ±× ¾ÆÀÌÅÛ »èÁ¦
-	int x, y;
-	srand((unsigned int)time(NULL));
-
-	y = rand() % 20 + 1; if (y > 19) y = 19;
-	x = rand() % 20 + 1; if (x > 19) x = 19;
-
-	while (count(tail_x, tail_x + tail_length, x) != 0 && count(tail_y, tail_y + tail_length, y) != 0) {
-		y = rand() % 20 + 1; if (y > 19) y = 19;
-		x = rand() % 20 + 1; if (x > 19) x = 19;
-	}
-	itemG_y = y;
-	itemG_x = x;
-	map[y][x] = 5;
+    if(itemG_y != 0) map[itemG_y][itemG_x] = 0; // ë³´ë“œì— ì´ë¯¸ ì•„ì´í…œGê°€ ìˆìœ¼ë©´ ê·¸ ì•„ì´í…œ ì‚­ì œ
+    int x, y;
+    srand((unsigned int)time(NULL));
+    
+    y = rand() %20 + 1; if (y>19) y = 19;
+    x = rand() %20 + 1; if (x>19) x = 19;
+    
+    while(count(tail_x, tail_x+tail_length, x) != 0 && count(tail_y, tail_y+tail_length, y) != 0) {
+        y = rand() %20 + 1; if (y>19) y = 19;
+        x = rand() %20 + 1; if (x>19) x = 19;
+    }
+    itemG_y = y;
+    itemG_x = x;
+    map[y][x] = 5;
 }
 
 void getItemP() {
-	if (itemP_y != 0) map[itemP_y][itemP_x] = 0;
-	int x, y;
-	srand((unsigned int)time(NULL));
-
-	y = rand() % 20 + 1; if (y > 19) y = 19;
-	x = rand() % 20 + 1; if (x > 19) x = 19;
-
-	while ((count(tail_x, tail_x + tail_length, x) != 0 && count(tail_y, tail_y + tail_length, y) != 0) || (x == itemG_x && y == itemG_y)) {
-		y = rand() % 20 + 1; if (y > 19) y = 19;
-		x = rand() % 20 + 1; if (x > 19) x = 19;
-	}
-	itemP_y = y;
-	itemP_x = x;
-	map[y][x] = 6;
+    if(itemP_y != 0) map[itemP_y][itemP_x] = 0;
+    int x, y;
+    srand((unsigned int)time(NULL));
+    
+    y = rand() %20 + 1; if (y>19) y = 19;
+    x = rand() %20 + 1; if (x>19) x = 19;
+    
+    while( (count(tail_x, tail_x+tail_length, x) != 0 && count(tail_y, tail_y+tail_length, y) != 0) || (x == itemG_x && y == itemG_y) ) {
+        y = rand() %20 + 1; if (y>19) y = 19;
+        x = rand() %20 + 1; if (x>19) x = 19;
+    }
+    itemP_y = y;
+    itemP_x = x;
+    map[y][x] = 6;
 }
 
 void setGate() {
-	if (passGate > 0) return;
-	if (gateA_y != 0 || gateA_x != 0) map[gateA_y][gateA_x] = 1;
-	if (gateB_y != 0 || gateB_x != 0) map[gateB_y][gateB_x] = 1;
-	int a, b, c, d;
-
-	srand((unsigned int)time(NULL));
-	a = rand() % 21; b = rand() % 21;
-	while (map[b][a] != 1) {
-		a = rand() % 21;
-		b = rand() % 21;
-	}
-	gateA_y = b;
-	gateA_x = a;
-	map[b][a] = 7;
-
-	c = rand() % 21; d = rand() % 21;
-	while ((map[d][c] != 1) && (map[d][c] != map[b][a])) {
-		c = rand() % 21;
-		d = rand() % 21;
-	}
-	gateB_y = d;
-	gateB_x = c;
-	map[d][c] = 8;
+    if(passGate > 0) return;
+    if(gateA_y != 0 || gateA_x != 0) map[gateA_y][gateA_x] = 1;
+    if(gateB_y != 0 || gateB_x != 0) map[gateB_y][gateB_x] = 1;
+    int a, b, c, d;
+    
+    srand((unsigned int)time(NULL));
+    a = rand() %21; b = rand() %21;
+    while(map[b][a] != 1) {
+        a = rand() %21;
+        b = rand() %21;
+    }
+    gateA_y = b;
+    gateA_x = a;
+    map[b][a] = 7;
+    
+    c = rand() %21; d = rand() %21;
+    while( (map[d][c] != 1) && (map[d][c] != map[b][a]) ) {
+        c = rand() %21;
+        d = rand() %21;
+    }
+    gateB_y = d;
+    gateB_x = c;
+    map[d][c] = 8;
 }
 
 int main() {
@@ -370,12 +360,12 @@ int main() {
 	pthread_t thread;
 	int thr_id = pthread_create(&thread, NULL, getInput, NULL);
 
-	int t = 0;
-
+    int t = 0;
+    
 	while (!isGameOver()) {
-		if (t >= 20 && t % 20 == 0) { getItemG(); getItemP(); }
-		if (tail_length >= 5 && t % 20 == 0) { setGate(); }
-		moveSnake();
+	    if (t >= 20 && t % 20 == 0) { getItemG(); getItemP(); }
+	    if (tail_length >= 5 && t % 20 == 0) { setGate(); }
+	    moveSnake();
 		drawMap();
 		usleep(500000);
 		t += 1;
