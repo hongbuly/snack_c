@@ -70,14 +70,40 @@ void setLevel() {
 					map[i][j] = 1;
 			}
 		}
-	else if (level == 3)
+	else if (level == 3) {
+        // 초기 몸통 위치 head[5, 4], 0[5, 5], 1[5, 6]
+        head_y = 5;
+	    head_x = 4;
+	    tail_y[0] = 5;
+    	tail_x[0] = 5;
+    	tail_y[1] = 5;
+    	tail_x[1] = 6;
 		for(int i=1; i<20; i++) {
-		    map[4][i] = 1; map[i][4] = 1;
+		    map[10][i] = 1; map[i][10] = 1;
 		}
-	else if (level == 4)
-	    for(int i=1; i<20; i++) {
-		    map[16][i] = 1; map[i][16] = 1;
+	}
+	else if (level == 4) {
+	    // 초기 몸통 위치 head[5, 4], 0[5, 5], 1[5, 6]
+        head_y = 5;
+	    head_x = 4;
+	    tail_y[0] = 5;
+    	tail_x[0] = 5;
+    	tail_y[1] = 5;
+    	tail_x[1] = 6;
+        for(int i=3; i<7; i++) {
+            map[7][i] = 1; map[13][i] = 1;
+        }
+		for(int i=7; i<13; i++) {
+            map[i][3] = 1;
 		}
+		for(int i=8; i<13; i++) {
+		    map[i][10] = 1; map[i][16] = 1;
+		}
+		for(int i=8; i<19; i++) {
+		    map[10][i] = 1;
+		}
+		map[10][13] = 0;
+	}
 }
 
 void setMap() {
@@ -98,19 +124,19 @@ void setMap() {
 	map[0][0] = 2; map[20][20] = 2;
 	map[20][0] = 2; map[0][20] = 2;
 	
-	setLevel();
-	
-    // 초기 몸통 위치 0[10, 10], 1[10, 11]
+    // 초기 몸통 위치 head[10, 9], 0[10, 10], 1[10, 11]
+    head_y = 10;
+	head_x = 9;
 	tail_y[0] = 10;
 	tail_x[0] = 10;
 	tail_y[1] = 10;
 	tail_x[1] = 11;
 	
+	setLevel();
+	
 	// initialization
 	direction_x = -1;
 	direction_y = 0;
-	head_y = 10;
-	head_x = 9;
 	tail_length = 2; 
 	itemG_score = 0;
 	itemP_score = 0;
@@ -233,7 +259,7 @@ void drawMap() {
 			else if (map[i][j] == 3)
 			{
 				tail_position++;
-				mvprintw(i, j, "\u2B1B");
+				mvprintw(i, j, "\U0001F7EB");
 			}
 			// 빈공간
 			else if (map[i][j] == 0) {
