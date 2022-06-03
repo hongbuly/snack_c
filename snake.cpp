@@ -19,28 +19,69 @@ int head_y = 10; int head_x = 9;
 int tail_x[400];
 int tail_y[400];
 int tail_length = 2;
+int tail_mission = 5;
 
 bool gameOver = false;
 
 // Item 위치
 int itemG_x; int itemG_y;
 int itemP_x; int itemP_y;
+int itemG_score = 0;
+int itemP_score = 0;
+int itemG_mission = 2;
+int itemP_mission = 0;
 
 // Gate 위치
 int gateA_x; int gateA_y;
 int gateB_x; int gateB_y;
+int gate_score = 0;
+int gate_mission = 1;
 
 // Gate 통과중인지 여부
 int passGate = 0;
+
+// time
+int t = 0;
+int t_mission = 15;
+int level = 1;
+
+void setLevel() {
+	if (level == 1) {
+		for (int i = 1; i < 20; i++) {
+			for (int j = 1; j < 20; j++) {
+				if ((i == 3 || i == 18) && j > 4 && j < 18)
+					map[i][j] = 1;
+				else if (i > 3 && i < 6 && (j == 5 || j == 17))
+					map[i][j] = 1;
+			}
+		}
+	}
+	else if (level == 2) {
+		for (int i = 1; i < 20; i++) {
+			for (int j = 1; j < 20; j++) {
+				if ((i == 21 - j || i == j) && (i < 7 || i > 13))
+					map[i][j] = 1;
+			}
+		}
+	}
+	else if (level == 3) {
+		
+	}
+	else if (level == 4) {
+		
+	}
+}
 
 void setMap() {
 	for (int i = 0; i < 21; i++) {
 		for (int j = 0; j < 21; j++) {
 			if (i == 0 || i == 20)
 				map[i][j] = 1;
-			else {
+			else if (j == 0 || j == 20) {
 				map[i][j] = 1;
-				j += 19;
+			}
+			else {
+				map[i][j] = 0;
 			}
 		}
 	}
@@ -49,11 +90,26 @@ void setMap() {
 	map[20][20] = 2;
 	map[20][0] = 2;
 	map[0][20] = 2;
+
+	setLevel();
+
 	// 초기 몸통 위치 0[10, 10], 1[10, 11]
 	tail_y[0] = 10;
 	tail_x[0] = 10;
 	tail_y[1] = 10;
 	tail_x[1] = 11;
+
+	// initialization
+	direction_x = -1;
+	direction_y = 0;
+	head_y = 10;
+	head_x = 9;
+	tail_length = 2; 
+	itemG_score = 0;
+	itemP_score = 0;
+	gate_score = 0;
+	passGate = 0;
+	t = 0;
 }
 
 bool isTailPosition(int tail_position, int i, int j) {
@@ -63,6 +119,84 @@ bool isTailPosition(int tail_position, int i, int j) {
 		}
 	}
 	return false;
+}
+
+void setMission() {
+	if (tail_mission < 18) {
+		tail_mission++;
+	}
+	itemG_mission++;
+	itemP_mission++;
+	gate_mission++;
+	t_mission += 2;
+}
+
+bool isNextStage() {
+	if (tail_length >= tail_mission && itemG_score >= itemG_mission
+		&& itemP_score >= itemP_mission && gate_score >= gate_mission
+		&& t / 2 >= t_mission)
+		return true;
+	return false;
+}
+
+void drawScore() {
+	mvprintw(3, 24, "Score Board");
+	mvprintw(4, 24, "B: ");
+	const char* tail_len_str = (to_string(tail_length)).c_str();
+	mvprintw(4, 27, tail_len_str);
+	const char* tail_mission_str = (to_string(tail_mission)).c_str();
+	mvprintw(4, 29, "/ ");
+	mvprintw(4, 31, tail_mission_str);
+	mvprintw(5, 24, "+: ");
+	const char* itemG_str = (to_string(itemG_score)).c_str();
+	mvprintw(5, 27, itemG_str);
+	mvprintw(6, 24, "-: ");
+	const char* itemP_str = (to_string(itemP_score)).c_str();
+	mvprintw(6, 27, itemP_str);
+	mvprintw(7, 24, "G: ");
+	const char* gate_str = (to_string(gate_score)).c_str();
+	mvprintw(7, 27, gate_str);
+	mvprintw(8, 24, "T: ");
+	const char* time_str = (to_string(t / 2)).c_str();
+	mvprintw(8, 27, time_str);
+
+	mvprintw(10, 24, "Mission");
+	mvprintw(11, 24, "B: ");
+	const char* tail_mission_str2 = (to_string(tail_mission)).c_str();
+	mvprintw(11, 27, tail_mission_str2);
+	mvprintw(12, 24, "+: ");
+	const char* itemG_mission_str = (to_string(itemG_mission)).c_str();
+	mvprintw(12, 27, itemG_mission_str);
+	mvprintw(13, 24, "-: ");
+	const char* itemP_mission_str = (to_string(itemP_mission)).c_str();
+	mvprintw(13, 27, itemP_mission_str);
+	mvprintw(14, 24, "G: ");
+	const char* gate_mission_str = (to_string(gate_mission)).c_str();
+	mvprintw(14, 27, gate_mission_str);
+	mvprintw(15, 24, "T: ");
+	const char* t_mission_str = (to_string(t_mission)).c_str();
+	mvprintw(15, 27, t_mission_str);
+
+	if (tail_mission <= tail_length)
+		mvprintw(11, 30, "(V)");
+	else
+		mvprintw(11, 30, "( )");
+	if (itemG_mission <= itemG_score)
+		mvprintw(12, 30, "(V)");
+	else
+		mvprintw(12, 30, "( )");
+	if (itemP_mission <= itemP_score)
+		mvprintw(13, 30, "(V)");
+	else
+		mvprintw(13, 30, "( )");
+	if (gate_mission <= gate_score)
+		mvprintw(14, 30, "(V)");
+	else
+		mvprintw(14, 30, "( )");
+	if (t_mission <= t / 2)
+		mvprintw(15, 30, "(V)");
+	else
+		mvprintw(15, 30, "( )");
 }
 
 void drawMap() {
@@ -97,7 +231,7 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(3));
 			}
-			// 외곽선
+			// 벽
 			if (map[i][j] == 1 || map[i][j] == 2)
 				mvprintw(i, j, "\u2B1B");
 			// 머리
@@ -126,20 +260,22 @@ void drawMap() {
 			}
 		}
 	}
+
+	drawScore();
 	refresh();
 }
 
 bool isGameOver() {
 	if (gameOver)
 		return true;
-	if (head_x == 0 || head_x == 20 || head_y == 0 || head_y == 20) { // snake가 외벽에 닿을 시
+	if (map[head_y][head_x] == 1 || map[head_y][head_x] == 2) { // snake가 벽에 닿을 시
 		return true;
 	}
 	if (tail_length < 2) return true; // 몸통의 길이가 2보다 작아질 경우
 	return false;
 }
 
-// moveSnake함수에 사용되는 함수
+// 뱀의 몸통이 앞 몸통을 따라 이동하는 함수
 void moveTails(int prevX, int prevY, int removeX, int removeY) {
 	for (int i = tail_length - 1; i > 0; i--) {
 		tail_x[i] = tail_x[i - 1];
@@ -153,6 +289,40 @@ void moveTails(int prevX, int prevY, int removeX, int removeY) {
 	map[removeY][removeX] = 0;
 }
 
+// 뱀의 이동경로 결정 및 머리 위치 이동
+void setSnake(int gate_x, int gate_y, int x, int y) {
+	direction_x = x;
+	direction_y = y;
+	head_x = gate_x + x;
+	head_y = gate_y + y;
+}
+
+void setGate(int gate_x, int gate_y) {
+	passGate += tail_length;
+
+	if (gate_x == 0) // (좌에서 우)
+		setSnake(gate_x, gate_y, 1, 0);
+	else if (gate_x == 20) // (우에서 좌)
+		setSnake(gate_x, gate_y, -1, 0);
+	else if (gate_y == 0) // (상에서 하)
+		setSnake(gate_x, gate_y, 0, 1);
+	else if (gate_y == 20) // (하에서 상)
+		setSnake(gate_x, gate_y, 0, -1);
+	else { // 벽이 아닌 곳에 게이트가 있을 경우
+		int tmp_x = gate_x + direction_x;
+		int tmp_y = gate_y + direction_y;
+
+		if (map[tmp_y][tmp_x] == 1) {
+			// R -> D, L->U, D->L, U->R
+			setSnake(gate_x, gate_y, direction_y * -1, direction_x);
+		}
+		else { // 진출방향에 벽이 없을경우
+			head_x = tmp_x;
+			head_y = tmp_y;
+		}
+	}
+}
+
 void moveSnake() {
 	int prevX = head_x;
 	int prevY = head_y;
@@ -162,10 +332,16 @@ void moveSnake() {
 	head_x += direction_x;
 	head_y += direction_y;
 
-	passGate--; if (passGate <= 0) passGate = 0;
-
+	if (passGate > 0) {
+		passGate--;
+		// 뱀이 게이트를 다 지나면 점수
+		if (passGate == 0)
+			gate_score++;
+	}
 	// Head가 아이템G에 닿았을 때
 	if (map[head_y][head_x] == 5) {
+		itemG_score++;
+
 		tail_length++;
 		for (int i = tail_length - 1; i > 0; i--) {
 			tail_x[i] = tail_x[i - 1];
@@ -182,6 +358,8 @@ void moveSnake() {
 	}
 	// Head가 아이템P에 닿았을 때
 	else if (map[head_y][head_x] == 6) {
+		itemP_score++;
+
 		map[removeY][removeX] = 0;
 		tail_length--;
 
@@ -193,70 +371,14 @@ void moveSnake() {
 	}
 	// Head가 게이트가 닿았을 때
 	else if (map[head_y][head_x] == 7) {
-		passGate += tail_length;
-		if (gateB_x == 0) { // (좌에서 우)
-			head_x = gateB_x + 1;
-			head_y = gateB_y;
-			direction_x = 1;
-			direction_y = 0;
-		}
-		else if (gateB_x == 20) { // (우에서 좌)
-			head_x = gateB_x - 1;
-			head_y = gateB_y;
-			direction_x = -1;
-			direction_y = 0;
-		}
-		else if (gateB_y == 0) { // (상에서 하)
-			head_x = gateB_x;
-			head_y = gateB_y + 1;
-			direction_x = 0;
-			direction_y = 1;
-		}
-		else if (gateB_y == 20) { // (하에서 상)
-			head_x = gateB_x;
-			head_y = gateB_y - 1;
-			direction_x = 0;
-			direction_y = -1;
-		}
-		else { // 벽이 아닌 곳에 게이트가 있을 경우 진행 방향 그대로
-			head_x = gateA_x + direction_x;
-			head_y = gateA_y + direction_y;
-		}
+		setGate(gateB_x, gateB_y);
 		moveTails(prevX, prevY, removeX, removeY);
 	}
 	else if (map[head_y][head_x] == 8) {
-		passGate += tail_length;
-		if (gateA_x == 0) { // (좌에서 우)
-			head_x = gateA_x + 1;
-			head_y = gateA_y;
-			direction_x = 1;
-			direction_y = 0;
-		}
-		else if (gateA_x == 20) { // (우에서 좌)
-			head_x = gateA_x - 1;
-			head_y = gateA_y;
-			direction_x = -1;
-			direction_y = 0;
-		}
-		else if (gateA_y == 0) { // (상에서 하)
-			head_x = gateA_x;
-			head_y = gateA_y + 1;
-			direction_x = 0;
-			direction_y = 1;
-		}
-		else if (gateA_y == 20) { // (하에서 상)
-			head_x = gateA_x;
-			head_y = gateA_y - 1;
-			direction_x = 0;
-			direction_y = -1;
-		}
-		else { // 벽이 아닌 곳에 게이트가 있을 경우 진행 방향 그대로
-			head_x = gateA_x + direction_x;
-			head_y = gateA_y + direction_y;
-		}
+		setGate(gateA_x, gateA_y);
 		moveTails(prevX, prevY, removeX, removeY);
 	}
-	else {
+	else { // 진출방향에 아무 것도 없을 시
 		moveTails(prevX, prevY, removeX, removeY);
 	}
 }
@@ -295,6 +417,16 @@ void* getInput(void* arg) {
 		}
 	}
 	return arg;
+}
+
+int getRandom() {
+	srand((unsigned int)time(NULL));
+	int tmp = rand() % 20 + 1; 
+	if (tmp > 19) tmp = 19;
+	while (count(tail_x, tail_x + tail_length, tmp) != 0 && count(tail_y, tail_y + tail_length, tmp) != 0)
+		tmp = rand() % 20 + 1;
+	if (tmp > 19) tmp = 19;
+	return tmp;
 }
 
 void getItemG() {
@@ -370,18 +502,26 @@ int main() {
 	pthread_t thread;
 	int thr_id = pthread_create(&thread, NULL, getInput, NULL);
 
-	int t = 0;
-
 	while (!isGameOver()) {
 		if (t >= 20 && t % 20 == 0) { getItemG(); getItemP(); }
 		if (tail_length >= 5 && t % 20 == 0) { setGate(); }
+		if (isNextStage()) { 
+			level++;
+			if (level == 5)
+				break;
+			setMission();
+			setMap();
+		}
 		moveSnake();
 		drawMap();
 		usleep(500000);
 		t += 1;
 	}
 
-	mvprintw(22, 5, "GameOver");
+	if (level == 5)
+		mvprintw(22, 5, "GameClear!");
+	else
+		mvprintw(22, 5, "GameOver");
 
 	getch();
 	endwin();
