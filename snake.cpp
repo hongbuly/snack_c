@@ -77,17 +77,15 @@ void setLevel() {
 }
 
 void setMap() {
-    memset(map, 0, sizeof(map));
-    memset(tail_x, 0, sizeof(tail_x));
-    memset(tail_y, 0, sizeof(tail_y));
     for (int i = 0; i < 21; i++)
 		for (int j = 0; j < 21; j++) {
 			if (i == 0 || i == 20)
 			    map[i][j] = 1;
-			else {
+			else if(j == 0 || j == 20) {
 				map[i][j] = 1;
-				j += 19;
 			}
+			else
+				map[i][j] = 0;
 		}
 	// 꼭지점
 	map[0][0] = 2; map[20][20] = 2;
