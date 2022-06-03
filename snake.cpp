@@ -271,6 +271,10 @@ bool isGameOver() {
 	if (map[head_y][head_x] == 1 || map[head_y][head_x] == 2) { // snake가 벽에 닿을 시
 		return true;
 	}
+	for (int i = 0; i < tail_length; i++) {
+		if (head_y == tail_y[i] && head_x == tail_x[i])
+			return true;
+	}
 	if (tail_length < 2) return true; // 몸통의 길이가 2보다 작아질 경우
 	return false;
 }
