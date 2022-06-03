@@ -22,9 +22,6 @@ int tail_length = 2;
 int tail_mission = 5;
 
 // Item 위치
-int itemG_x; int itemG_y;
-int itemP_x; int itemP_y;
-
 deque<int> item_x;
 deque<int> item_y;
 deque<int> item_time;
@@ -57,15 +54,19 @@ void setLevel() {
 	if (level == 1)
 		for (int i = 1; i < 20; i++) {
 			for (int j = 1; j < 20; j++) {
-				if ((i == 3 || i == 18) && j > 4 && j < 18)
+				if ((i == 3 || i == 15) && j > 5 && j < 17)
 					map[i][j] = 1;
 				else if (i > 3 && i < 6 && (j == 5 || j == 17))
 					map[i][j] = 1;
+				else if (i == 3 && (j == 5 || j == 17))
+					map[i][j] = 2;
 			}
 		}
 	else if (level == 2)
 		for (int i = 1; i < 20; i++) {
 			for (int j = 1; j < 20; j++) {
+				if ((i == 21 - j || i == j) && (i < 3 || i > 18))
+					map[i][j] = 2;
 				if ((i == 21 - j || i == j) && (i < 7 || i > 13))
 					map[i][j] = 1;
 			}
@@ -81,6 +82,7 @@ void setLevel() {
 		for(int i=1; i<20; i++) {
 		    map[10][i] = 1; map[i][10] = 1;
 		}
+		map[10][10] = 2;
 	}
 	else if (level == 4) {
 	    // 초기 몸통 위치 head[5, 4], 0[5, 5], 1[5, 6]
@@ -459,7 +461,7 @@ void* getInput(void *arg) {
 	return arg;
 }
 
-void getItemG(int t) {
+void setItem(int t, int num) {
     if(item_x.size()>0)
         for(int i =0; i<item_x.size(); i++) {
             if(t - item_time[i] >= 40) {
@@ -475,46 +477,12 @@ void getItemG(int t) {
         item_y.pop_front();
         item_time.pop_front();
     }
-    
     int x, y;
     srand((unsigned int)time(NULL));
-    
     y = rand() %20 + 1; if (y>19) y = 19;
     x = rand() %20 + 1; if (x>19) x = 19;
     
-    while(map[y][x] != 0 || (x == head_x && y == head_y)) { // 헤드와 중복 가능성 있음
-        y = rand() %20 + 1; if (y>19) y = 19;
-        x = rand() %20 + 1; if (x>19) x = 19;
-    }
-    item_y.push_back(y);
-    item_x.push_back(x);
-    item_time.push_back(t);
-    map[y][x] = 5;
-}
-
-void getItemP(int t) {
-    if(item_x.size()>0)
-        for(int i =0; i<item_x.size(); i++) {
-            if(t - item_time[i] >= 30) {
-                map[item_y[i]][item_x[i]] = 0;
-                item_x.erase( item_x.begin() + i );
-                item_y.erase( item_y.begin() + i );
-                item_time.erase( item_time.begin() + i );
-            }
-        }
-    while(item_x.size() >= 3) {
-        map[item_y.front()][item_x.front()] = 0;
-        item_x.pop_front();
-        item_y.pop_front();
-        item_time.pop_front();
-    }
-    
-    int x, y;
-    srand((unsigned int)time(NULL));
-    
-    y = rand() %20 + 1; if (y>19) y = 19;
-    x = rand() %20 + 1; if (x>19) x = 19;
-    
+    // 탈출조건 : 좌표값이 0이면서, 뱀의 머리와 겹치지않아야함
     while(map[y][x] != 0 || (x == head_x && y == head_y)) {
         y = rand() %20 + 1; if (y>19) y = 19;
         x = rand() %20 + 1; if (x>19) x = 19;
@@ -522,7 +490,7 @@ void getItemP(int t) {
     item_y.push_back(y);
     item_x.push_back(x);
     item_time.push_back(t);
-    map[y][x] = 6;
+    map[y][x] = num;
 }
 
 void setGate() {
@@ -576,8 +544,8 @@ int main() {
 	    if (t >= 10 && t % 10 == 0) {
 	        srand((unsigned int)time(NULL));
             int r = rand() %3;
-            if(r >0) getItemG(t);
-            else getItemP(t);
+            if(r >0) setItem(t, 5);
+            else setItem(t, 6);
         }
         
 	    if (tail_length >= 4 && t % 20 == 0) { setGate(); }
