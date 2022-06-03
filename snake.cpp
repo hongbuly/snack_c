@@ -6,38 +6,44 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <deque>
 using namespace std;
 
-int map[21][21]; // ë³´ë“œ í¬ê¸°
+int map[21][21]; // º¸µå Å©±â
 int direction_x = -1; //left:-1, right:1
 int direction_y; //up:-1, down:1
 
-// ë¨¸ë¦¬ ìœ„ì¹˜
+// ¸Ó¸® À§Ä¡
 int head_y = 10; int head_x = 9;
 
-// ëª¸í†µ í¬ê¸°
-int tail_x[400];
-int tail_y[400];
+// ¸öÅë Å©±â
+int tail_x[400]; int tail_y[400];
 int tail_length = 2;
 int tail_mission = 5;
 
-bool gameOver = false;
-
-// Item ìœ„ì¹˜
+// Item À§Ä¡
 int itemG_x; int itemG_y;
 int itemP_x; int itemP_y;
+
+deque<int> item_x;
+deque<int> item_y;
+deque<int> item_time;
+
+// Item ½ºÄÚ¾î
 int itemG_score = 0;
 int itemP_score = 0;
 int itemG_mission = 2;
 int itemP_mission = 0;
 
-// Gate ìœ„ì¹˜
+// Gate À§Ä¡
 int gateA_x; int gateA_y;
 int gateB_x; int gateB_y;
+
+// Gate ½ºÄÚ¾î
 int gate_score = 0;
 int gate_mission = 1;
 
-// Gate í†µê³¼ì¤‘ì¸ì§€ ì—¬ë¶€
+// Gate Åë°úÁßÀÎÁö ¿©ºÎ
 int passGate = 0;
 
 // time
@@ -45,55 +51,58 @@ int t = 0;
 int t_mission = 15;
 int level = 1;
 
+bool gameOver = false;
+
 void setLevel() {
-	if (level == 1) {
+	if (level == 1)
 		for (int i = 1; i < 20; i++) {
 			for (int j = 1; j < 20; j++) {
-				if ((i == 3 || i == 18) && j > 4 && j < 18)
+				if ((i == 3 || i == 18) && j > 5 && j < 17)
 					map[i][j] = 1;
 				else if (i > 3 && i < 6 && (j == 5 || j == 17))
 					map[i][j] = 1;
+				else if ((i == 3 || i == 18) && (j == 5 || j == 17))
+					map[i][j] = 2;
 			}
 		}
-	}
-	else if (level == 2) {
+	else if (level == 2)
 		for (int i = 1; i < 20; i++) {
 			for (int j = 1; j < 20; j++) {
 				if ((i == 21 - j || i == j) && (i < 7 || i > 13))
 					map[i][j] = 1;
 			}
 		}
-	}
-	else if (level == 3) {
-		
-	}
-	else if (level == 4) {
-		
-	}
+	else if (level == 3)
+		for (int i = 1; i < 20; i++) {
+			map[4][i] = 1; map[i][4] = 1;
+		}
+	else if (level == 4)
+		for (int i = 1; i < 20; i++) {
+			map[16][i] = 1; map[i][16] = 1;
+		}
 }
 
 void setMap() {
-	for (int i = 0; i < 21; i++) {
+	item_x.clear();
+	item_y.clear();
+	item_time.clear();
+	for (int i = 0; i < 21; i++)
 		for (int j = 0; j < 21; j++) {
 			if (i == 0 || i == 20)
 				map[i][j] = 1;
 			else if (j == 0 || j == 20) {
 				map[i][j] = 1;
 			}
-			else {
+			else
 				map[i][j] = 0;
-			}
 		}
-	}
-	// ê¼­ì§€ì 
-	map[0][0] = 2;
-	map[20][20] = 2;
-	map[20][0] = 2;
-	map[0][20] = 2;
+	// ²ÀÁöÁ¡
+	map[0][0] = 2; map[20][20] = 2;
+	map[20][0] = 2; map[0][20] = 2;
 
 	setLevel();
 
-	// ì´ˆê¸° ëª¸í†µ ìœ„ì¹˜ 0[10, 10], 1[10, 11]
+	// ÃÊ±â ¸öÅë À§Ä¡ 0[10, 10], 1[10, 11]
 	tail_y[0] = 10;
 	tail_x[0] = 10;
 	tail_y[1] = 10;
@@ -104,7 +113,7 @@ void setMap() {
 	direction_y = 0;
 	head_y = 10;
 	head_x = 9;
-	tail_length = 2; 
+	tail_length = 2;
 	itemG_score = 0;
 	itemP_score = 0;
 	gate_score = 0;
@@ -204,7 +213,7 @@ void drawMap() {
 	int tail_position = 0;
 	for (int i = 0; i < 21; i++) {
 		for (int j = 0; j < 21; j++) {
-			// ì•„ì´í…œG
+			// ¾ÆÀÌÅÛG
 			if (map[i][j] == 5) {
 				start_color();
 				init_pair(5, COLOR_GREEN, COLOR_BLACK);
@@ -213,7 +222,7 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(5));
 			}
-			// ì•„ì´í…œP
+			// ¾ÆÀÌÅÛP
 			else if (map[i][j] == 6) {
 				start_color();
 				init_pair(4, COLOR_RED, COLOR_BLACK);
@@ -222,7 +231,7 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(4));
 			}
-			// ê²Œì´íŠ¸
+			// °ÔÀÌÆ®
 			else if (map[i][j] == 7 || map[i][j] == 8) {
 				start_color();
 				init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
@@ -231,10 +240,10 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(3));
 			}
-			// ë²½
+			// º®
 			if (map[i][j] == 1 || map[i][j] == 2)
 				mvprintw(i, j, "\u2B1B");
-			// ë¨¸ë¦¬
+			// ¸Ó¸®
 			else if (head_y == i && head_x == j) {
 				start_color();
 				init_pair(1, COLOR_YELLOW, COLOR_BLACK);
@@ -243,7 +252,7 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(1));
 			}
-			// ëª¸í†µ
+			// ¸öÅë
 			else if (map[i][j] == 3)
 			{
 				tail_position++;
@@ -254,7 +263,7 @@ void drawMap() {
 				mvprintw(i, j, "\u2B1B");
 				attroff(COLOR_PAIR(2));
 			}
-			// ë¹ˆê³µê°„
+			// ºó°ø°£
 			else if (map[i][j] == 0) {
 				mvprintw(i, j, "\u2B1C");
 			}
@@ -268,18 +277,16 @@ void drawMap() {
 bool isGameOver() {
 	if (gameOver)
 		return true;
-	if (map[head_y][head_x] == 1 || map[head_y][head_x] == 2) { // snakeê°€ ë²½ì— ë‹¿ì„ ì‹œ
+	if (map[head_y][head_x] == 1 || map[head_y][head_x] == 2) // snake°¡ º®¿¡ ´êÀ» ½Ã
 		return true;
-	}
-	for (int i = 0; i < tail_length; i++) {
-		if (head_y == tail_y[i] && head_x == tail_x[i])
+	if (tail_length < 2) return true; // ¸öÅëÀÇ ±æÀÌ°¡ 2º¸´Ù ÀÛ¾ÆÁú °æ¿ì
+	for (int i = 0; i < tail_length; i++)
+		if (head_y == tail_y[i] && head_x == tail_x[i]) // ¸Ó¸®°¡ ¸ö¿¡ ´ê¾ÒÀ» °æ¿ì
 			return true;
-	}
-	if (tail_length < 2) return true; // ëª¸í†µì˜ ê¸¸ì´ê°€ 2ë³´ë‹¤ ì‘ì•„ì§ˆ ê²½ìš°
 	return false;
 }
 
-// ë±€ì˜ ëª¸í†µì´ ì• ëª¸í†µì„ ë”°ë¼ ì´ë™í•˜ëŠ” í•¨ìˆ˜
+// ¹ìÀÇ ¸öÅëÀÌ ¾Õ ¸öÅëÀ» µû¶ó ÀÌµ¿ÇÏ´Â ÇÔ¼ö
 void moveTails(int prevX, int prevY, int removeX, int removeY) {
 	for (int i = tail_length - 1; i > 0; i--) {
 		tail_x[i] = tail_x[i - 1];
@@ -293,7 +300,7 @@ void moveTails(int prevX, int prevY, int removeX, int removeY) {
 	map[removeY][removeX] = 0;
 }
 
-// ë±€ì˜ ì´ë™ê²½ë¡œ ê²°ì • ë° ë¨¸ë¦¬ ìœ„ì¹˜ ì´ë™
+// ¹ìÀÇ ÀÌµ¿°æ·Î °áÁ¤ ¹× ¸Ó¸® À§Ä¡ ÀÌµ¿
 void setSnake(int gate_x, int gate_y, int x, int y) {
 	direction_x = x;
 	direction_y = y;
@@ -301,26 +308,52 @@ void setSnake(int gate_x, int gate_y, int x, int y) {
 	head_y = gate_y + y;
 }
 
-void setGate(int gate_x, int gate_y) {
+void moveGate(int gate_x, int gate_y) {
 	passGate += tail_length;
 
-	if (gate_x == 0) // (ì¢Œì—ì„œ ìš°)
+	if (gate_x == 0) // (ÁÂ¿¡¼­ ¿ì)
 		setSnake(gate_x, gate_y, 1, 0);
-	else if (gate_x == 20) // (ìš°ì—ì„œ ì¢Œ)
+	else if (gate_x == 20) // (¿ì¿¡¼­ ÁÂ)
 		setSnake(gate_x, gate_y, -1, 0);
-	else if (gate_y == 0) // (ìƒì—ì„œ í•˜)
+	else if (gate_y == 0) // (»ó¿¡¼­ ÇÏ)
 		setSnake(gate_x, gate_y, 0, 1);
-	else if (gate_y == 20) // (í•˜ì—ì„œ ìƒ)
+	else if (gate_y == 20) // (ÇÏ¿¡¼­ »ó)
 		setSnake(gate_x, gate_y, 0, -1);
-	else { // ë²½ì´ ì•„ë‹Œ ê³³ì— ê²Œì´íŠ¸ê°€ ìˆì„ ê²½ìš°
+	else { // º®ÀÌ ¾Æ´Ñ °÷¿¡ °ÔÀÌÆ®°¡ ÀÖÀ» °æ¿ì
 		int tmp_x = gate_x + direction_x;
 		int tmp_y = gate_y + direction_y;
 
-		if (map[tmp_y][tmp_x] == 1) {
-			// R -> D, L->U, D->L, U->R
-			setSnake(gate_x, gate_y, direction_y * -1, direction_x);
+		if (map[tmp_y][tmp_x] == 1) { // ÁøÃâ¹æÇâ¿¡ º®ÀÌ ÀÖ´Ù¸é
+			if (direction_x == 1 && direction_y == 0) // ¿ì
+				if (map[gate_y + 1][gate_x] != 1) // ½Ã°è¹æÇâ
+					setSnake(gate_x, gate_y, 0, 1);
+				else if (map[gate_y - 1][gate_x] != 1) // ¹İ½Ã°è¹æÇâ
+					setSnake(gate_x, gate_y, 0, -1);
+				else // ¹İ´ë¹æÇâ
+					setSnake(gate_x, gate_y, -1, 0);
+			else if (direction_x == -1 && direction_y == 0) // ÁÂ
+				if (map[gate_y - 1][gate_x] != 1)
+					setSnake(gate_x, gate_y, 0, -1);
+				else if (map[gate_y + 1][gate_x] != 1)
+					setSnake(gate_x, gate_y, 0, 1);
+				else
+					setSnake(gate_x, gate_y, 1, 0);
+			else if (direction_x == 0 && direction_y == 1) // ÇÏ
+				if (map[gate_y][gate_x - 1] != 1)
+					setSnake(gate_x, gate_y, -1, 0);
+				else if (map[gate_y][gate_x + 1] != 1)
+					setSnake(gate_x, gate_y, 1, 0);
+				else
+					setSnake(gate_x, gate_y, 0, -1);
+			else if (direction_x == 0 && direction_y == -1) // »ó
+				if (map[gate_y][gate_x + 1] != 1)
+					setSnake(gate_x, gate_y, 1, 0);
+				else if (map[gate_y][gate_x - 1] != 1)
+					setSnake(gate_x, gate_y, -1, 0);
+				else
+					setSnake(gate_x, gate_y, 0, 1);
 		}
-		else { // ì§„ì¶œë°©í–¥ì— ë²½ì´ ì—†ì„ê²½ìš°
+		else { // ÁøÃâ¹æÇâ¿¡ º®ÀÌ ¾øÀ»°æ¿ì
 			head_x = tmp_x;
 			head_y = tmp_y;
 		}
@@ -338,29 +371,28 @@ void moveSnake() {
 
 	if (passGate > 0) {
 		passGate--;
-		// ë±€ì´ ê²Œì´íŠ¸ë¥¼ ë‹¤ ì§€ë‚˜ë©´ ì ìˆ˜
+		// ¹ìÀÌ °ÔÀÌÆ®¸¦ ´Ù Áö³ª¸é Á¡¼ö
 		if (passGate == 0)
 			gate_score++;
 	}
-	// Headê°€ ì•„ì´í…œGì— ë‹¿ì•˜ì„ ë•Œ
+
+	// Head°¡ ¾ÆÀÌÅÛG¿¡ ´ê¾ÒÀ» ¶§
 	if (map[head_y][head_x] == 5) {
 		itemG_score++;
 
 		tail_length++;
-		for (int i = tail_length - 1; i > 0; i--) {
-			tail_x[i] = tail_x[i - 1];
-			tail_y[i] = tail_y[i - 1];
-		}
-		tail_x[0] = prevX;
-		tail_y[0] = prevY;
-
-		for (int i = 0; i < tail_length; i++)
-			map[tail_y[i]][tail_x[i]] = 3;
-		// ì•„ì´í…œG íšë“ ì‹œ ëª¸ì˜ ê¸¸ì´ê°€ ì§„í–‰ë°©í–¥ìœ¼ë¡œ ì¦ê°€í•˜ë¯€ë¡œ ë§ˆì§€ë§‰ ê¼¬ë¦¬ë¥¼ ì‚­ì œ X
-		// map[removeY][removeX] = 0;
+		moveTails(prevX, prevY, removeX, removeY);
+		// ¾ÆÀÌÅÛG È¹µæ ½Ã ¸öÀÇ ±æÀÌ°¡ ÁøÇà¹æÇâÀ¸·Î Áõ°¡ÇÏ¹Ç·Î ¸¶Áö¸· ²¿¸®¸¦ »èÁ¦ X
+		map[removeY][removeX] = 3;
 		map[head_y][head_x] = 0;
+
+		auto it = find(item_x.begin(), item_x.end(), head_x);
+		int idx = it - item_x.begin();
+		item_x.erase(item_x.begin() + idx);
+		item_y.erase(item_y.begin() + idx);
+		item_time.erase(item_time.begin() + idx);
 	}
-	// Headê°€ ì•„ì´í…œPì— ë‹¿ì•˜ì„ ë•Œ
+	// Head°¡ ¾ÆÀÌÅÛP¿¡ ´ê¾ÒÀ» ¶§
 	else if (map[head_y][head_x] == 6) {
 		itemP_score++;
 
@@ -372,17 +404,24 @@ void moveSnake() {
 
 		moveTails(prevX, prevY, removeX, removeY);
 		map[head_y][head_x] = 0;
+
+		auto it = find(item_x.begin(), item_x.end(), head_x);
+		int idx = it - item_x.begin();
+		item_x.erase(item_x.begin() + idx);
+		item_y.erase(item_y.begin() + idx);
+		item_time.erase(item_time.begin() + idx);
 	}
-	// Headê°€ ê²Œì´íŠ¸ê°€ ë‹¿ì•˜ì„ ë•Œ
+
+	// Head°¡ °ÔÀÌÆ®°¡ ´ê¾ÒÀ» ¶§
 	else if (map[head_y][head_x] == 7) {
-		setGate(gateB_x, gateB_y);
+		moveGate(gateB_x, gateB_y);
 		moveTails(prevX, prevY, removeX, removeY);
 	}
 	else if (map[head_y][head_x] == 8) {
-		setGate(gateA_x, gateA_y);
+		moveGate(gateA_x, gateA_y);
 		moveTails(prevX, prevY, removeX, removeY);
 	}
-	else { // ì§„ì¶œë°©í–¥ì— ì•„ë¬´ ê²ƒë„ ì—†ì„ ì‹œ
+	else { // ÁøÃâ¹æÇâ¿¡ ¾Æ¹« °Íµµ ¾øÀ» ½Ã
 		moveTails(prevX, prevY, removeX, removeY);
 	}
 }
@@ -423,47 +462,69 @@ void* getInput(void* arg) {
 	return arg;
 }
 
-int getRandom() {
-	srand((unsigned int)time(NULL));
-	int tmp = rand() % 20 + 1; 
-	if (tmp > 19) tmp = 19;
-	while (count(tail_x, tail_x + tail_length, tmp) != 0 && count(tail_y, tail_y + tail_length, tmp) != 0)
-		tmp = rand() % 20 + 1;
-	if (tmp > 19) tmp = 19;
-	return tmp;
-}
+void getItemG(int t) {
+	if (item_x.size() > 0)
+		for (int i = 0; i < item_x.size(); i++) {
+			if (t - item_time[i] >= 40) {
+				map[item_y[i]][item_x[i]] = 0;
+				item_x.erase(item_x.begin() + i);
+				item_y.erase(item_y.begin() + i);
+				item_time.erase(item_time.begin() + i);
+			}
+		}
+	while (item_x.size() >= 3) {
+		map[item_y.front()][item_x.front()] = 0;
+		item_x.pop_front();
+		item_y.pop_front();
+		item_time.pop_front();
+	}
 
-void getItemG() {
-	if (itemG_y != 0) map[itemG_y][itemG_x] = 0; // ë³´ë“œì— ì´ë¯¸ ì•„ì´í…œGê°€ ìˆìœ¼ë©´ ê·¸ ì•„ì´í…œ ì‚­ì œ
 	int x, y;
 	srand((unsigned int)time(NULL));
 
 	y = rand() % 20 + 1; if (y > 19) y = 19;
 	x = rand() % 20 + 1; if (x > 19) x = 19;
 
-	while (count(tail_x, tail_x + tail_length, x) != 0 && count(tail_y, tail_y + tail_length, y) != 0) {
+	while (map[y][x] != 0 || (x == head_x && y == head_y)) { // Çìµå¿Í Áßº¹ °¡´É¼º ÀÖÀ½
 		y = rand() % 20 + 1; if (y > 19) y = 19;
 		x = rand() % 20 + 1; if (x > 19) x = 19;
 	}
-	itemG_y = y;
-	itemG_x = x;
+	item_y.push_back(y);
+	item_x.push_back(x);
+	item_time.push_back(t);
 	map[y][x] = 5;
 }
 
-void getItemP() {
-	if (itemP_y != 0) map[itemP_y][itemP_x] = 0;
+void getItemP(int t) {
+	if (item_x.size() > 0)
+		for (int i = 0; i < item_x.size(); i++) {
+			if (t - item_time[i] >= 30) {
+				map[item_y[i]][item_x[i]] = 0;
+				item_x.erase(item_x.begin() + i);
+				item_y.erase(item_y.begin() + i);
+				item_time.erase(item_time.begin() + i);
+			}
+		}
+	while (item_x.size() >= 3) {
+		map[item_y.front()][item_x.front()] = 0;
+		item_x.pop_front();
+		item_y.pop_front();
+		item_time.pop_front();
+	}
+
 	int x, y;
 	srand((unsigned int)time(NULL));
 
 	y = rand() % 20 + 1; if (y > 19) y = 19;
 	x = rand() % 20 + 1; if (x > 19) x = 19;
 
-	while ((count(tail_x, tail_x + tail_length, x) != 0 && count(tail_y, tail_y + tail_length, y) != 0) || (x == itemG_x && y == itemG_y)) {
+	while (map[y][x] != 0 || (x == head_x && y == head_y)) {
 		y = rand() % 20 + 1; if (y > 19) y = 19;
 		x = rand() % 20 + 1; if (x > 19) x = 19;
 	}
-	itemP_y = y;
-	itemP_x = x;
+	item_y.push_back(y);
+	item_x.push_back(x);
+	item_time.push_back(t);
 	map[y][x] = 6;
 }
 
@@ -484,7 +545,7 @@ void setGate() {
 	map[b][a] = 7;
 
 	c = rand() % 21; d = rand() % 21;
-	while ((map[d][c] != 1) && (map[d][c] != map[b][a])) {
+	while ((map[d][c] != 1) || (map[d][c] == map[b][a])) {
 		c = rand() % 21;
 		d = rand() % 21;
 	}
@@ -507,15 +568,23 @@ int main() {
 	int thr_id = pthread_create(&thread, NULL, getInput, NULL);
 
 	while (!isGameOver()) {
-		if (t >= 20 && t % 20 == 0) { getItemG(); getItemP(); }
-		if (tail_length >= 5 && t % 20 == 0) { setGate(); }
-		if (isNextStage()) { 
+		if (isNextStage()) {
 			level++;
 			if (level == 5)
 				break;
 			setMission();
 			setMap();
 		}
+
+		if (t >= 10 && t % 10 == 0) {
+			srand((unsigned int)time(NULL));
+			int r = rand() % 3;
+			if (r > 0) getItemG(t);
+			else getItemP(t);
+		}
+
+		if (tail_length >= 4 && t % 20 == 0) { setGate(); }
+
 		moveSnake();
 		drawMap();
 		usleep(500000);
