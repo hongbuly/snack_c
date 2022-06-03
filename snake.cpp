@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <memory.h>
 using namespace std;
 
 int map[21][21]; // 보드 크기
@@ -16,12 +17,9 @@ int direction_y; //up:-1, down:1
 int head_y = 10; int head_x = 9; 
 
 // 몸통 크기
-int tail_x[400];
-int tail_y[400];
+int tail_x[400]; int tail_y[400];
 int tail_length = 2;
 int tail_mission = 5;
-
-bool gameOver = false;
 
 // Item 위치
 int itemG_x; int itemG_y;
@@ -49,6 +47,8 @@ int t = 0;
 int t_mission = 15;
 int level = 1;
 
+bool gameOver = false;
+
 void setLevel() {
 	if (level == 1)
 		for (int i = 1; i < 20; i++) {
@@ -66,24 +66,32 @@ void setLevel() {
 					map[i][j] = 1;
 			}
 		}
+	else if (level == 3)
+		for(int i=1; i<20; i++) {
+		    map[4][i] = 1; map[i][4] = 1;
+		}
+	else if (level == 4)
+	    for(int i=1; i<20; i++) {
+		    map[16][i] = 1; map[i][16] = 1;
+		}
 }
 
 void setMap() {
-	for (int i = 0; i < 21; i++) {
+    memset(map, 0, sizeof(map));
+    memset(tail_x, 0, sizeof(tail_x));
+    memset(tail_y, 0, sizeof(tail_y));
+    for (int i = 0; i < 21; i++)
 		for (int j = 0; j < 21; j++) {
 			if (i == 0 || i == 20)
-				map[i][j] = 1;
+			    map[i][j] = 1;
 			else {
 				map[i][j] = 1;
 				j += 19;
 			}
 		}
-	}
 	// 꼭지점
-	map[0][0] = 2;
-	map[20][20] = 2;
-	map[20][0] = 2;
-	map[0][20] = 2;
+	map[0][0] = 2; map[20][20] = 2;
+	map[20][0] = 2; map[0][20] = 2;
 	
 	setLevel();
 	
@@ -228,6 +236,7 @@ void drawMap() {
 			}
 		}
 	}
+	drawScore();
 	refresh();
 }
 
@@ -263,6 +272,58 @@ void setSnake(int gate_x, int gate_y, int x, int y) {
     direction_y = y;
     head_x = gate_x + x;
     head_y = gate_y + y;
+}
+
+void moveGate(int gate_x, int gate_y) {
+    passGate += tail_length;
+    
+    if(gate_x == 0) // (좌에서 우)
+        setSnake(gate_x, gate_y, 1, 0);
+    else if(gate_x == 20) // (우에서 좌)
+        setSnake(gate_x, gate_y, -1, 0);
+    else if(gate_y == 0) // (상에서 하)
+        setSnake(gate_x, gate_y, 0, 1);
+    else if(gate_y == 20) // (하에서 상)
+        setSnake(gate_x, gate_y, 0, -1);
+    else { // 벽이 아닌 곳에 게이트가 있을 경우
+        int tmp_x = gate_x + direction_x;
+        int tmp_y = gate_y + direction_y;
+        
+        if(map[tmp_y][tmp_x] == 1) { // 진출방향에 벽이 있다면
+            if(direction_x == 1 && direction_y == 0) // 우
+                if(map[gate_y+1][gate_x] != 1) // 시계방향
+                    setSnake(gate_x, gate_y, 0, 1);
+                else if(map[gate_y-1][gate_x] != 1) // 반시계방향
+                    setSnake(gate_x, gate_y, 0, -1);
+                else // 반대방향
+                    setSnake(gate_x, gate_y, -1, 0);
+            else if(direction_x == -1 && direction_y == 0) // 좌
+                if(map[gate_y-1][gate_x] != 1)
+                    setSnake(gate_x, gate_y, 0, -1);
+                else if(map[gate_y+1][gate_x] != 1)
+                    setSnake(gate_x, gate_y, 0, 1);
+                else
+                    setSnake(gate_x, gate_y, 1, 0);
+            else if(direction_x == 0 && direction_y == 1) // 하
+                if(map[gate_y][gate_x-1] != 1)
+                    setSnake(gate_x, gate_y, -1, 0);
+                else if(map[gate_y][gate_x+1] != 1)
+                    setSnake(gate_x, gate_y, 1, 0);
+                else
+                    setSnake(gate_x, gate_y, 0, -1);
+            else if(direction_x == 0 && direction_y == -1) // 상
+                if(map[gate_y][gate_x+1] != 1)
+                    setSnake(gate_x, gate_y, 1, 0);
+                else if(map[gate_y][gate_x-1] != 1)
+                    setSnake(gate_x, gate_y, -1, 0);
+                else
+                    setSnake(gate_x, gate_y, 0, 1);
+        }
+        else { // 진출방향에 벽이 없을경우
+            head_x = tmp_x;
+            head_y = tmp_y;
+        }
+    }
 }
 
 void moveSnake() {
@@ -307,105 +368,11 @@ void moveSnake() {
 
 	// Head가 게이트가 닿았을 때
 	else if(map[head_y][head_x] == 7) {
-	    passGate += tail_length;
-        if(gateB_x == 0) // (좌에서 우)
-            setSnake(gateB_x, gateB_y, 1, 0);
-        else if(gateB_x == 20) // (우에서 좌)
-            setSnake(gateB_x, gateB_y, -1, 0);
-        else if(gateB_y == 0) // (상에서 하)
-            setSnake(gateB_x, gateB_y, 0, 1);
-        else if(gateB_y == 20) // (하에서 상)
-            setSnake(gateB_x, gateB_y, 0, -1);
-        else { // 벽이 아닌 곳에 게이트가 있을 경우
-            int tmp_x = gateB_x + direction_x;
-            int tmp_y = gateB_y + direction_y;
-            
-            if(map[tmp_y][tmp_x] == 1) { // 진출방향에 벽이 있다면
-                if(direction_x == 1 && direction_y == 0) // 우
-                    if(map[gateB_y+1][gateB_x] != 1) // 시계방향
-                        setSnake(gateB_x, gateB_y, 0, 1);
-                    else if(map[gateB_y-1][gateB_x] != 1) // 반시계방향
-                        setSnake(gateB_x, gateB_y, 0, -1);
-                    else // 반대방향
-                        setSnake(gateB_x, gateB_y, -1, 0);
-                else if(direction_x == -1 && direction_y == 0) // 좌
-                    if(map[gateB_y-1][gateB_x] != 1)
-                        setSnake(gateB_x, gateB_y, 0, -1);
-                    else if(map[gateB_y+1][gateB_x] != 1)
-                        setSnake(gateB_x, gateB_y, 0, 1);
-                    else
-                        setSnake(gateB_x, gateB_y, 1, 0);
-                else if(direction_x == 0 && direction_y == 1) // 하
-                    if(map[gateB_y][gateB_x-1] != 1)
-                        setSnake(gateB_x, gateB_y, -1, 0);
-                    else if(map[gateB_y][gateB_x+1] != 1)
-                        setSnake(gateB_x, gateB_y, 1, 0);
-                    else
-                        setSnake(gateA_x, gateA_y, 0, -1);
-                else if(direction_x == 0 && direction_y == -1) // 상
-                    if(map[gateB_y][gateB_x+1] != 1)
-                        setSnake(gateB_x, gateB_y, 1, 0);
-                    else if(map[gateB_y][gateB_x-1] != 1)
-                        setSnake(gateB_x, gateB_y, -1, 0);
-                    else
-                        setSnake(gateB_x, gateB_y, 0, 1);
-            }
-            else { // 진출방향에 벽이 없을경우
-                head_x = tmp_x;
-                head_y = tmp_y;
-            }
-        }
+        moveGate(gateB_x, gateB_y);
         moveTails(prevX, prevY, removeX, removeY);
 	}
 	else if(map[head_y][head_x] == 8) {
-	    passGate += tail_length;
-        if(gateA_x == 0) // (좌에서 우)
-            setSnake(gateA_x, gateA_y, 1, 0);
-        else if(gateA_x == 20) // (우에서 좌)
-            setSnake(gateA_x, gateA_y, -1, 0);
-        else if(gateA_y == 0) // (상에서 하)
-            setSnake(gateA_x, gateA_y, 0, 1);
-        else if(gateA_y == 20) // (하에서 상)
-            setSnake(gateA_x, gateA_y, 0, -1);
-        else { // 벽이 아닌 곳에 게이트가 있을 경우
-            int tmp_x = gateA_x + direction_x;
-            int tmp_y = gateA_y + direction_y;
-            
-            if(map[tmp_y][tmp_x] == 1) { // 진출방향에 벽이 있다면
-                if(direction_x == 1 && direction_y == 0) // 진행방향 : 우
-                    if(map[gateA_y+1][gateA_x] != 1) // 시계방향
-                        setSnake(gateA_x, gateA_y, 0, 1);
-                    else if(map[gateA_y-1][gateA_x] != 1) // 반시계방향
-                        setSnake(gateA_x, gateA_y, 0, -1);
-                    else // 반대방향
-                        setSnake(gateA_x, gateA_y, -1, 0);
-                else if(direction_x == -1 && direction_y == 0) // 진행방향 : 좌
-                    if(map[gateA_y-1][gateA_x] != 1)
-                        setSnake(gateA_x, gateA_y, 0, -1);
-                    else if(map[gateA_y+1][gateA_x] != 1)
-                        setSnake(gateA_x, gateA_y, 0, 1);
-                    else
-                        setSnake(gateA_x, gateA_y, 1, 0);
-                else if(direction_x == 0 && direction_y == 1) // 하 -> 좌
-                    if(map[gateA_y][gateA_x-1] != 1)
-                        setSnake(gateA_x, gateA_y, -1, 0);
-                    else if(map[gateA_y][gateA_x+1] != 1)
-                        setSnake(gateA_x, gateA_y, 1, 0);
-                    else
-                        setSnake(gateA_x, gateA_y, 0, -1);
-                else if(direction_x == 0 && direction_y == -1) // 상 -> 우
-                    if(map[gateA_y][gateA_x+1] != 1)
-                        setSnake(gateA_x, gateA_y, 1, 0);
-                    else if(map[gateA_y][gateA_x-1] != 1)
-                        setSnake(gateA_x, gateA_y, -1, 0);
-                    else
-                        setSnake(gateA_x, gateA_y, 0, 1);
-            }
-            else { // 진출방향에 벽이 없을경우
-                head_x = tmp_x;
-                head_y = tmp_y;
-            }
-        }
+	    moveGate(gateA_x, gateA_y);
         moveTails(prevX, prevY, removeX, removeY);
 	}
 	else { // 진출방향에 아무 것도 없을 시
