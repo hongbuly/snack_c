@@ -74,14 +74,40 @@ void setLevel() {
 					map[i][j] = 1;
 			}
 		}
-	else if (level == 3)
+	else if (level == 3) {
+		// 초기 몸통 위치 head[5, 4], 0[5, 5], 1[5, 6]
+		head_y = 5;
+		head_x = 4;
+		tail_y[0] = 5;
+		tail_x[0] = 5;
+		tail_y[1] = 5;
+		tail_x[1] = 6;
 		for (int i = 1; i < 20; i++) {
-			map[4][i] = 1; map[i][4] = 1;
+			map[10][i] = 1; map[i][10] = 1;
 		}
-	else if (level == 4)
-		for (int i = 1; i < 20; i++) {
-			map[16][i] = 1; map[i][16] = 1;
+	}
+	else if (level == 4) {
+		// 초기 몸통 위치 head[5, 4], 0[5, 5], 1[5, 6]
+		head_y = 5;
+		head_x = 4;
+		tail_y[0] = 5;
+		tail_x[0] = 5;
+		tail_y[1] = 5;
+		tail_x[1] = 6;
+		for (int i = 3; i < 7; i++) {
+			map[7][i] = 1; map[13][i] = 1;
 		}
+		for (int i = 7; i < 13; i++) {
+			map[i][3] = 1;
+		}
+		for (int i = 8; i < 13; i++) {
+			map[i][10] = 1; map[i][16] = 1;
+		}
+		for (int i = 8; i < 19; i++) {
+			map[10][i] = 1;
+		}
+		map[10][13] = 0;
+	}
 }
 
 void setMap() {
