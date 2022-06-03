@@ -57,17 +57,19 @@ void setLevel() {
 	if (level == 1)
 		for (int i = 1; i < 20; i++) {
 			for (int j = 1; j < 20; j++) {
-				if ((i == 3 || i == 18) && j > 5 && j < 17)
+				if ((i == 3 || i == 15) && j > 5 && j < 17)
 					map[i][j] = 1;
 				else if (i > 3 && i < 6 && (j == 5 || j == 17))
 					map[i][j] = 1;
-				else if ((i == 3 || i == 18) && (j == 5 || j == 17))
+				else if (i == 3 && (j == 5 || j == 17))
 					map[i][j] = 2;
 			}
 		}
 	else if (level == 2)
 		for (int i = 1; i < 20; i++) {
 			for (int j = 1; j < 20; j++) {
+				if ((i == 21 - j || i == j) && (i < 3 || i > 18))
+					map[i][j] = 2;
 				if ((i == 21 - j || i == j) && (i < 7 || i > 13))
 					map[i][j] = 1;
 			}
