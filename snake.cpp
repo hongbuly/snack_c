@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
-#include <memory.h>
+#include <deque>
 using namespace std;
 
 int map[21][21]; // 보드 크기
@@ -24,6 +24,10 @@ int tail_mission = 5;
 // Item 위치
 int itemG_x; int itemG_y;
 int itemP_x; int itemP_y;
+
+deque<int> item_x;
+deque<int> item_y;
+deque<int> item_time;
 
 // Item 스코어
 int itemG_score = 0;
@@ -77,6 +81,9 @@ void setLevel() {
 }
 
 void setMap() {
+    item_x.clear();
+    item_y.clear();
+    item_time.clear();
     for (int i = 0; i < 21; i++)
 		for (int j = 0; j < 21; j++) {
 			if (i == 0 || i == 20)
@@ -349,6 +356,12 @@ void moveSnake() {
         // 아이템G 획득 시 몸의 길이가 진행방향으로 증가하므로 마지막 꼬리를 삭제 X
 	    map[removeY][removeX] = 3;
 	    map[head_y][head_x] = 0;
+        
+        auto it = find(item_x.begin(), item_x.end(), head_x);
+	    int idx = it - item_x.begin();
+	    item_x.erase( item_x.begin() + idx );
+	    item_y.erase( item_y.begin() + idx );
+	    item_time.erase(item_time.begin() + idx);
 	}
 	// Head가 아이템P에 닿았을 때
 	else if(map[head_y][head_x] == 6) {
@@ -362,6 +375,12 @@ void moveSnake() {
 	    
 	    moveTails(prevX, prevY, removeX, removeY);
         map[head_y][head_x] = 0;
+        
+        auto it = find(item_x.begin(), item_x.end(), head_x);
+	    int idx = it - item_x.begin();
+	    item_x.erase( item_x.begin() + idx );
+	    item_y.erase( item_y.begin() + idx );
+	    item_time.erase(item_time.begin() + idx);
 	}
 
 	// Head가 게이트가 닿았을 때
@@ -414,8 +433,23 @@ void* getInput(void *arg) {
 	return arg;
 }
 
-void getItemG() {
-    if(itemG_y != 0) map[itemG_y][itemG_x] = 0; // 보드에 이미 아이템G가 있으면 그 아이템 삭제
+void getItemG(int t) {
+    if(item_x.size()>0)
+        for(int i =0; i<item_x.size(); i++) {
+            if(t - item_time[i] >= 40) {
+                map[item_y[i]][item_x[i]] = 0;
+                item_x.erase( item_x.begin() + i );
+                item_y.erase( item_y.begin() + i );
+                item_time.erase( item_time.begin() + i );
+            }
+        }
+    while(item_x.size() >= 3) {
+        map[item_y.front()][item_x.front()] = 0;
+        item_x.pop_front();
+        item_y.pop_front();
+        item_time.pop_front();
+    }
+    
     int x, y;
     srand((unsigned int)time(NULL));
     
@@ -426,13 +460,29 @@ void getItemG() {
         y = rand() %20 + 1; if (y>19) y = 19;
         x = rand() %20 + 1; if (x>19) x = 19;
     }
-    itemG_y = y;
-    itemG_x = x;
+    item_y.push_back(y);
+    item_x.push_back(x);
+    item_time.push_back(t);
     map[y][x] = 5;
 }
 
-void getItemP() {
-    if(itemP_y != 0) map[itemP_y][itemP_x] = 0;
+void getItemP(int t) {
+    if(item_x.size()>0)
+        for(int i =0; i<item_x.size(); i++) {
+            if(t - item_time[i] >= 30) {
+                map[item_y[i]][item_x[i]] = 0;
+                item_x.erase( item_x.begin() + i );
+                item_y.erase( item_y.begin() + i );
+                item_time.erase( item_time.begin() + i );
+            }
+        }
+    while(item_x.size() >= 3) {
+        map[item_y.front()][item_x.front()] = 0;
+        item_x.pop_front();
+        item_y.pop_front();
+        item_time.pop_front();
+    }
+    
     int x, y;
     srand((unsigned int)time(NULL));
     
@@ -443,8 +493,9 @@ void getItemP() {
         y = rand() %20 + 1; if (y>19) y = 19;
         x = rand() %20 + 1; if (x>19) x = 19;
     }
-    itemP_y = y;
-    itemP_x = x;
+    item_y.push_back(y);
+    item_x.push_back(x);
+    item_time.push_back(t);
     map[y][x] = 6;
 }
 
@@ -496,9 +547,13 @@ int main() {
 			setMap();
 		}
 	    
-	    if (t >= 20 && t % 20 == 0) {
-            getItemG(); getItemP();
-	    }
+	    if (t >= 10 && t % 10 == 0) {
+	        srand((unsigned int)time(NULL));
+            int r = rand() %3;
+            if(r >0) getItemG(t);
+            else getItemP(t);
+        }
+        
 	    if (tail_length >= 4 && t % 20 == 0) { setGate(); }
 	    
 	    moveSnake();
