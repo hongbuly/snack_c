@@ -19,6 +19,7 @@ int head_y = 10; int head_x = 9;
 int tail_x[400];
 int tail_y[400];
 int tail_length = 2;
+int tail_mission = 5;
 
 bool gameOver = false;
 
@@ -26,12 +27,46 @@ bool gameOver = false;
 int itemG_x; int itemG_y;
 int itemP_x; int itemP_y;
 
+// Item 스코어
+int itemG_score = 0;
+int itemP_score = 0;
+int itemG_mission = 2;
+int itemP_mission = 0;
+
 // Gate 위치
 int gateA_x; int gateA_y;
 int gateB_x; int gateB_y;
 
+// Gate 스코어
+int gate_score = 0;
+int gate_mission = 1;
+
 // Gate 통과중인지 여부
 int passGate = 0;
+
+// time
+int t = 0;
+int t_mission = 15;
+int level = 1;
+
+void setLevel() {
+	if (level == 1)
+		for (int i = 1; i < 20; i++) {
+			for (int j = 1; j < 20; j++) {
+				if ((i == 3 || i == 18) && j > 4 && j < 18)
+					map[i][j] = 1;
+				else if (i > 3 && i < 6 && (j == 5 || j == 17))
+					map[i][j] = 1;
+			}
+		}
+	else if (level == 2)
+		for (int i = 1; i < 20; i++) {
+			for (int j = 1; j < 20; j++) {
+				if ((i == 21 - j || i == j) && (i < 7 || i > 13))
+					map[i][j] = 1;
+			}
+		}
+}
 
 void setMap() {
 	for (int i = 0; i < 21; i++) {
@@ -50,19 +85,25 @@ void setMap() {
 	map[20][0] = 2;
 	map[0][20] = 2;
 	
-	// 임시벽 추후 삭제
-	map[4][4] = 1;
-	map[4][5] = 1;
-	map[4][6] = 1;
-	map[5][6] = 1;
-	map[6][6] = 1;
-	map[7][6] = 1;
+	setLevel();
 	
     // 초기 몸통 위치 0[10, 10], 1[10, 11]
 	tail_y[0] = 10;
 	tail_x[0] = 10;
 	tail_y[1] = 10;
 	tail_x[1] = 11;
+	
+	// initialization
+	direction_x = -1;
+	direction_y = 0;
+	head_y = 10;
+	head_x = 9;
+	tail_length = 2; 
+	itemG_score = 0;
+	itemP_score = 0;
+	gate_score = 0;
+	passGate = 0;
+	t = 0;
 }
 
 bool isTailPosition(int tail_position, int i, int j) {
@@ -74,6 +115,84 @@ bool isTailPosition(int tail_position, int i, int j) {
 	return false;
 }
 
+void setMission() {
+	if (tail_mission < 18) {
+		tail_mission++;
+	}
+	itemG_mission++;
+	itemP_mission++;
+	gate_mission++;
+	t_mission += 2;
+}
+
+bool isNextStage() {
+	if (tail_length >= tail_mission && itemG_score >= itemG_mission
+		&& itemP_score >= itemP_mission && gate_score >= gate_mission
+		&& t / 2 >= t_mission)
+		return true;
+	return false;
+}
+
+void drawScore() {
+	mvprintw(3, 24, "Score Board");
+	mvprintw(4, 24, "B: ");
+	const char* tail_len_str = (to_string(tail_length)).c_str();
+	mvprintw(4, 27, tail_len_str);
+	const char* tail_mission_str = (to_string(tail_mission)).c_str();
+	mvprintw(4, 29, "/ ");
+	mvprintw(4, 31, tail_mission_str);
+	mvprintw(5, 24, "+: ");
+	const char* itemG_str = (to_string(itemG_score)).c_str();
+	mvprintw(5, 27, itemG_str);
+	mvprintw(6, 24, "-: ");
+	const char* itemP_str = (to_string(itemP_score)).c_str();
+	mvprintw(6, 27, itemP_str);
+	mvprintw(7, 24, "G: ");
+	const char* gate_str = (to_string(gate_score)).c_str();
+	mvprintw(7, 27, gate_str);
+	mvprintw(8, 24, "T: ");
+	const char* time_str = (to_string(t / 2)).c_str();
+	mvprintw(8, 27, time_str);
+
+	mvprintw(10, 24, "Mission");
+	mvprintw(11, 24, "B: ");
+	const char* tail_mission_str2 = (to_string(tail_mission)).c_str();
+	mvprintw(11, 27, tail_mission_str2);
+	mvprintw(12, 24, "+: ");
+	const char* itemG_mission_str = (to_string(itemG_mission)).c_str();
+	mvprintw(12, 27, itemG_mission_str);
+	mvprintw(13, 24, "-: ");
+	const char* itemP_mission_str = (to_string(itemP_mission)).c_str();
+	mvprintw(13, 27, itemP_mission_str);
+	mvprintw(14, 24, "G: ");
+	const char* gate_mission_str = (to_string(gate_mission)).c_str();
+	mvprintw(14, 27, gate_mission_str);
+	mvprintw(15, 24, "T: ");
+	const char* t_mission_str = (to_string(t_mission)).c_str();
+	mvprintw(15, 27, t_mission_str);
+
+	if (tail_mission <= tail_length)
+		mvprintw(11, 30, "(V)");
+	else
+		mvprintw(11, 30, "( )");
+	if (itemG_mission <= itemG_score)
+		mvprintw(12, 30, "(V)");
+	else
+		mvprintw(12, 30, "( )");
+	if (itemP_mission <= itemP_score)
+		mvprintw(13, 30, "(V)");
+	else
+		mvprintw(13, 30, "( )");
+	if (gate_mission <= gate_score)
+		mvprintw(14, 30, "(V)");
+	else
+		mvprintw(14, 30, "( )");
+	if (t_mission <= t / 2)
+		mvprintw(15, 30, "(V)");
+	else
+		mvprintw(15, 30, "( )");
+}
+
 void drawMap() {
 	clear();
 	int tail_position = 0;
@@ -81,7 +200,7 @@ void drawMap() {
 		for (int j = 0; j < 21; j++) {
 		    // 아이템G
 		    if (map[i][j] == 5) {
-				mvprintw(i, j, "U0001F7E9");
+				mvprintw(i, j, "\U0001F7E9");
 			}
 			// 아이템P
 			else if (map[i][j] == 6) {
@@ -115,10 +234,12 @@ void drawMap() {
 bool isGameOver() {
 	if (gameOver)
 		return true;
-	if (map[head_y][head_x] == 1 || map[head_y][head_x] == 2) { // snake가 벽에 닿을 시
+	if (map[head_y][head_x] == 1 || map[head_y][head_x] == 2) // snake가 벽에 닿을 시
 		return true;
-	}
 	if (tail_length < 2) return true; // 몸통의 길이가 2보다 작아질 경우
+	for (int i = 0; i < tail_length; i++)
+		if (head_y == tail_y[i] && head_x == tail_x[i]) // 머리가 몸에 닿았을 경우
+			return true;
 	return false;
 }
 
@@ -153,26 +274,27 @@ void moveSnake() {
 	head_x += direction_x;
 	head_y += direction_y;
 	
-	passGate--; if(passGate<=0) passGate = 0;
+	if (passGate > 0) {
+		passGate--;
+		// 뱀이 게이트를 다 지나면 점수
+		if (passGate == 0)
+			gate_score++;
+	}
 	
 	// Head가 아이템G에 닿았을 때
 	if(map[head_y][head_x] == 5) {
-	    tail_length++;
-	    for (int i = tail_length - 1; i > 0; i--) {
-		    tail_x[i] = tail_x[i - 1];
-		    tail_y[i] = tail_y[i - 1];
-	    }
-	    tail_x[0] = prevX;
-	    tail_y[0] = prevY;
+	    itemG_score++;
 	    
-	    for (int i = 0; i < tail_length; i++)
-            map[tail_y[i]][tail_x[i]] = 3;
+	    tail_length++;
+	    moveTails(prevX, prevY, removeX, removeY);
         // 아이템G 획득 시 몸의 길이가 진행방향으로 증가하므로 마지막 꼬리를 삭제 X
-	    // map[removeY][removeX] = 0;
+	    map[removeY][removeX] = 3;
 	    map[head_y][head_x] = 0;
 	}
 	// Head가 아이템P에 닿았을 때
 	else if(map[head_y][head_x] == 6) {
+	    itemP_score++;
+	    
 	    map[removeY][removeX] = 0;
 	    tail_length--;
 	    
@@ -198,15 +320,35 @@ void moveSnake() {
             int tmp_x = gateB_x + direction_x;
             int tmp_y = gateB_y + direction_y;
             
-            if(map[tmp_y][tmp_x] == 1) {
-                if(direction_x == 1 && direction_y == 0) // 우 -> 하
-                    setSnake(gateB_x, gateB_y, 0, 1);
-                else if(direction_x == -1 && direction_y == 0) // 좌 -> 상
-                    setSnake(gateB_x, gateB_y, 0, -1);
-                else if(direction_x == 0 && direction_y == 1) // 하 -> 좌
-                    setSnake(gateB_x, gateB_y, -1, 0);
-                else if(direction_x == 0 && direction_y == -1) // 상 -> 우
-                    setSnake(gateB_x, gateB_y, 1, 0);
+            if(map[tmp_y][tmp_x] == 1) { // 진출방향에 벽이 있다면
+                if(direction_x == 1 && direction_y == 0) // 우
+                    if(map[gateB_y+1][gateB_x] != 1) // 시계방향
+                        setSnake(gateB_x, gateB_y, 0, 1);
+                    else if(map[gateB_y-1][gateB_x] != 1) // 반시계방향
+                        setSnake(gateB_x, gateB_y, 0, -1);
+                    else // 반대방향
+                        setSnake(gateB_x, gateB_y, -1, 0);
+                else if(direction_x == -1 && direction_y == 0) // 좌
+                    if(map[gateB_y-1][gateB_x] != 1)
+                        setSnake(gateB_x, gateB_y, 0, -1);
+                    else if(map[gateB_y+1][gateB_x] != 1)
+                        setSnake(gateB_x, gateB_y, 0, 1);
+                    else
+                        setSnake(gateB_x, gateB_y, 1, 0);
+                else if(direction_x == 0 && direction_y == 1) // 하
+                    if(map[gateB_y][gateB_x-1] != 1)
+                        setSnake(gateB_x, gateB_y, -1, 0);
+                    else if(map[gateB_y][gateB_x+1] != 1)
+                        setSnake(gateB_x, gateB_y, 1, 0);
+                    else
+                        setSnake(gateA_x, gateA_y, 0, -1);
+                else if(direction_x == 0 && direction_y == -1) // 상
+                    if(map[gateB_y][gateB_x+1] != 1)
+                        setSnake(gateB_x, gateB_y, 1, 0);
+                    else if(map[gateB_y][gateB_x-1] != 1)
+                        setSnake(gateB_x, gateB_y, -1, 0);
+                    else
+                        setSnake(gateB_x, gateB_y, 0, 1);
             }
             else { // 진출방향에 벽이 없을경우
                 head_x = tmp_x;
@@ -229,15 +371,35 @@ void moveSnake() {
             int tmp_x = gateA_x + direction_x;
             int tmp_y = gateA_y + direction_y;
             
-            if(map[tmp_y][tmp_x] == 1) {
-                if(direction_x == 1 && direction_y == 0) // 우 -> 하
-                    setSnake(gateA_x, gateA_y, 0, 1);
-                else if(direction_x == -1 && direction_y == 0) // 좌 -> 상
-                    setSnake(gateA_x, gateA_y, 0, -1);
+            if(map[tmp_y][tmp_x] == 1) { // 진출방향에 벽이 있다면
+                if(direction_x == 1 && direction_y == 0) // 진행방향 : 우
+                    if(map[gateA_y+1][gateA_x] != 1) // 시계방향
+                        setSnake(gateA_x, gateA_y, 0, 1);
+                    else if(map[gateA_y-1][gateA_x] != 1) // 반시계방향
+                        setSnake(gateA_x, gateA_y, 0, -1);
+                    else // 반대방향
+                        setSnake(gateA_x, gateA_y, -1, 0);
+                else if(direction_x == -1 && direction_y == 0) // 진행방향 : 좌
+                    if(map[gateA_y-1][gateA_x] != 1)
+                        setSnake(gateA_x, gateA_y, 0, -1);
+                    else if(map[gateA_y+1][gateA_x] != 1)
+                        setSnake(gateA_x, gateA_y, 0, 1);
+                    else
+                        setSnake(gateA_x, gateA_y, 1, 0);
                 else if(direction_x == 0 && direction_y == 1) // 하 -> 좌
-                    setSnake(gateA_x, gateA_y, -1, 0);
+                    if(map[gateA_y][gateA_x-1] != 1)
+                        setSnake(gateA_x, gateA_y, -1, 0);
+                    else if(map[gateA_y][gateA_x+1] != 1)
+                        setSnake(gateA_x, gateA_y, 1, 0);
+                    else
+                        setSnake(gateA_x, gateA_y, 0, -1);
                 else if(direction_x == 0 && direction_y == -1) // 상 -> 우
-                    setSnake(gateA_x, gateA_y, 1, 0);
+                    if(map[gateA_y][gateA_x+1] != 1)
+                        setSnake(gateA_x, gateA_y, 1, 0);
+                    else if(map[gateA_y][gateA_x-1] != 1)
+                        setSnake(gateA_x, gateA_y, -1, 0);
+                    else
+                        setSnake(gateA_x, gateA_y, 0, 1);
             }
             else { // 진출방향에 벽이 없을경우
                 head_x = tmp_x;
@@ -295,7 +457,7 @@ void getItemG() {
     y = rand() %20 + 1; if (y>19) y = 19;
     x = rand() %20 + 1; if (x>19) x = 19;
     
-    while(count(tail_x, tail_x+tail_length, x) != 0 && count(tail_y, tail_y+tail_length, y) != 0) {
+    while(map[y][x] != 0 || (x == head_x && y == head_y)) { // 헤드와 중복 가능성 있음
         y = rand() %20 + 1; if (y>19) y = 19;
         x = rand() %20 + 1; if (x>19) x = 19;
     }
@@ -312,7 +474,7 @@ void getItemP() {
     y = rand() %20 + 1; if (y>19) y = 19;
     x = rand() %20 + 1; if (x>19) x = 19;
     
-    while( (count(tail_x, tail_x+tail_length, x) != 0 && count(tail_y, tail_y+tail_length, y) != 0) || (x == itemG_x && y == itemG_y) ) {
+    while(map[y][x] != 0 || (x == head_x && y == head_y)) {
         y = rand() %20 + 1; if (y>19) y = 19;
         x = rand() %20 + 1; if (x>19) x = 19;
     }
@@ -338,7 +500,7 @@ void setGate() {
     map[b][a] = 7;
     
     c = rand() %21; d = rand() %21;
-    while( (map[d][c] != 1) && (map[d][c] != map[b][a]) ) {
+    while( (map[d][c] != 1) || (map[d][c] == map[b][a]) ) {
         c = rand() %21;
         d = rand() %21;
     }
@@ -359,19 +521,31 @@ int main() {
 	setMap();
 	pthread_t thread;
 	int thr_id = pthread_create(&thread, NULL, getInput, NULL);
-
-    int t = 0;
     
 	while (!isGameOver()) {
-	    if (t >= 20 && t % 20 == 0) { getItemG(); getItemP(); }
-	    if (tail_length >= 5 && t % 20 == 0) { setGate(); }
+	    if (isNextStage()) { 
+			level++;
+			if (level == 5)
+				break;
+			setMission();
+			setMap();
+		}
+	    
+	    if (t >= 20 && t % 20 == 0) {
+            getItemG(); getItemP();
+	    }
+	    if (tail_length >= 4 && t % 20 == 0) { setGate(); }
+	    
 	    moveSnake();
 		drawMap();
 		usleep(500000);
 		t += 1;
 	}
 
-	mvprintw(22, 5, "GameOver");
+	if (level == 5)
+		mvprintw(22, 5, "GameClear!");
+	else
+		mvprintw(22, 5, "GameOver");
 
 	getch();
 	endwin();
